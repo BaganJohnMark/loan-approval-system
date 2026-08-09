@@ -1,0 +1,46 @@
+[
+  {
+    "feature": "cibil_score",
+    "importance": 0.8016
+  },
+  {
+    "feature": "loan_term",
+    "importance": 0.0648
+  },
+  {
+    "feature": "loan_amount",
+    "importance": 0.0305
+  },
+  {
+    "feature": "income_annum",
+    "importance": 0.02
+  },
+  {
+    "feature": "luxury_assets_value",
+    "importance": 0.0191
+  },
+  {
+    "feature": "commercial_assets_value",
+    "importance": 0.0183
+  },
+  {
+    "feature": "residential_assets_value",
+    "importance": 0.0173
+  },
+  {
+    "feature": "bank_asset_value",
+    "importance": 0.0149
+  },
+  {
+    "feature": "no_of_dependents",
+    "importance": 0.0084
+  },
+  {
+    "feature": "self_employed",
+    "importance": 0.0027
+  },
+  {
+    "feature": "education",
+    "importance": 0.0024
+  }
+]

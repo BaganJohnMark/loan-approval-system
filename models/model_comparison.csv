@@ -1,0 +1,5 @@
+Model,Accuracy,Precision,Recall,F1-Score,ROC-AUC,False Approval Rate,False Rejection Rate
+Logistic Regression,92.27,0.9159,0.8762,0.8956,0.9745,4.9,12.38
+Decision Tree,97.19,0.9746,0.9505,0.9624,0.9677,1.51,4.95
+Random Forest,98.24,0.9904,0.9628,0.9765,0.9979,0.56,3.72
+XGBoost,98.01,0.9842,0.9628,0.9734,0.9986,0.94,3.72

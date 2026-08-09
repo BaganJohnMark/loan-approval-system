@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Applicant Records</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container wide">
+        <div class="card">
+            <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="22" cy="22" r="20" fill="#1F6F5C"/>
+  <circle cx="22" cy="22" r="20" fill="none" stroke="#B08D57" stroke-width="1.5"/>
+  <circle cx="22" cy="22" r="16" fill="none" stroke="#B08D57" stroke-width="0.75" stroke-dasharray="1.5 2.5"/>
+  <path d="M14 23.5L19 28.5L30 16" fill="none" stroke="#FDFBF6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+            <h1>Applicant Records</h1>
+            <a class="records-link" href="/">← Back to Prediction Form</a>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Income</th>
+                            <th>Loan Amount</th>
+                            <th>CIBIL</th>
+                            <th>Prediction</th>
+                            <th>Probability</th>
+                            <th>Risk Tier</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr>
+                            <td>{{ app["id"] }}</td>
+                            <td>{{ app["applicant_name"] }}</td>
+                            <td>₱{{ "{:,.0f}".format(app["income_annum"]) }}</td>
+                            <td>₱{{ "{:,.0f}".format(app["loan_amount"]) }}</td>
+                            <td>{{ app["cibil_score"] }}</td>
+                            <td>
+                                {% if app["prediction"] == "Approved" %}
+                                    <span class="tag approved">Approved</span>
+                                {% else %}
+                                    <span class="tag rejected">Rejected</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ app["probability"] }}%</td>
+                            <td>{{ app["risk_tier"] }}</td>
+                            <td>{{ app["created_at"] }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="9">No applications yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

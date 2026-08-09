@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prediction Result</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card result-card">
+    <div class="brand-row" style="justify-content:center;">
+        <img src="/static/logo.svg" alt="Logo" width="36" height="36">
+        <span class="brand-name">CREDORA</span>
+    </div>
+    {% if prediction == "Approved" %}
+        <div class="card result-card">
+            {% if prediction == "Approved" %}
+                <div class="result-badge approved">✓ APPROVED</div>
+            {% else %}
+                <div class="result-badge rejected">✗ REJECTED</div>
+            {% endif %}
+
+            <h2>{{ applicant_name }}</h2>
+
+         <div class="progress-ring-wrap">
+                <svg width="140" height="140" viewBox="0 0 140 140">
+                    <circle cx="70" cy="70" r="60" fill="none" stroke="#E7E1D3" stroke-width="10"/>
+                    <circle id="progressCircle" cx="70" cy="70" r="60" fill="none"
+                        stroke="{{ '#1F6F5C' if prediction == 'Approved' else '#A5401F' }}"
+                        stroke-width="10" stroke-linecap="round"
+                        stroke-dasharray="377" stroke-dashoffset="377"
+                        transform="rotate(-90 70 70)"/>
+                    <text x="70" y="65" text-anchor="middle" font-family="IBM Plex Mono" font-size="22" font-weight="600" fill="#16241F">{{ probability }}%</text>
+                    <text x="70" y="84" text-anchor="middle" font-family="Inter" font-size="10" letter-spacing="1" fill="#6B7A75">APPROVAL ODDS</text>
+                </svg>
+            </div>
+
+            <div class="result-details">
+                <div class="detail-row">
+                    <span>Risk Tier</span>
+                    <strong class="risk-{{ risk_tier|replace(' ', '-')|lower }}">{{ risk_tier }}</strong>
+                </div>
+            </div>
+            {% if top_factors %}
+            <div class="result-details">
+                <p style="font-weight:600; color:#334155; margin-bottom:8px; font-size:14px;">Top factors that influenced this decision:</p>
+                {% for factor in top_factors %}
+                <div class="detail-row">
+                    <span>{{ factor.feature }}</span>
+                    <strong>{{ "{:,.0f}".format(factor.value) if factor.value is number and factor.value > 100 else factor.value }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="button-row">
+                <a href="/" class="btn">New Prediction</a>
+                <a href="/records" class="btn btn-secondary">View Records</a>
+            </div>
+        </div>
+    </div>
+<script>
+    window.addEventListener("DOMContentLoaded", () => {
+        const circle = document.getElementById("progressCircle");
+        const circumference = 377;
+        const probability = {{ probability }};
+        const offset = circumference - (probability / 100) * circumference;
+
+        circle.style.transition = "stroke-dashoffset 1.4s ease-out";
+        setTimeout(() => {
+            circle.style.strokeDashoffset = offset;
+        }, 150);
+    });
+</script>
+</body>
+</html>
