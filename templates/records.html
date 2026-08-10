@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>Applicant Records</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container wide">
         <div class="card">
-            <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="22" cy="22" r="20" fill="#1F6F5C"/>
-  <circle cx="22" cy="22" r="20" fill="none" stroke="#B08D57" stroke-width="1.5"/>
-  <circle cx="22" cy="22" r="16" fill="none" stroke="#B08D57" stroke-width="0.75" stroke-dasharray="1.5 2.5"/>
-  <path d="M14 23.5L19 28.5L30 16" fill="none" stroke="#FDFBF6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
+            <div class="brand-row">
+                <img src="/static/logo.svg" alt="Logo" width="36" height="36">
+                <span class="brand-name">CREDORA</span>
+            </div>
             <h1>Applicant Records</h1>
             <a class="records-link" href="/">← Back to Prediction Form</a>
+            <a class="records-link" href="/logout">Log Out</a>
+            <a class="records-link" href="/insights">View Feature Importance →</a>
 
             <div class="table-wrapper">
                 <table>
@@ -29,6 +32,7 @@
                             <th>Prediction</th>
                             <th>Probability</th>
                             <th>Risk Tier</th>
+                            <th>Flags</th>
                             <th>Date</th>
                         </tr>
                     </thead>
@@ -49,10 +53,17 @@
                             </td>
                             <td>{{ app["probability"] }}%</td>
                             <td>{{ app["risk_tier"] }}</td>
+                            <td>
+                                {% if app["flags"] %}
+                                    <span class="tag rejected">⚠ Flagged</span>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
                             <td>{{ app["created_at"] }}</td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="9">No applications yet.</td></tr>
+                        <tr><td colspan="10">No applications yet.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

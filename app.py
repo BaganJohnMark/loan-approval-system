@@ -2,14 +2,15 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from functools import wraps
 import joblib
 import numpy as np
-from database import init_db, save_application, get_all_applications
+import json
+from database import init_db, migrate_db, save_application, get_all_applications
 
 app = Flask(__name__)
 app.secret_key = "change-this-to-a-random-secret-key-later"
 
 # ----- Admin credentials (simple version) -----
 ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "adminkami"
+ADMIN_PASSWORD = "admin123"
 
 # ----- Login-required decorator -----
 def login_required(f):
@@ -19,6 +20,8 @@ def login_required(f):
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated_function
+
+
 # ----- Load trained model and preprocessing objects -----
 model = joblib.load("models/best_model.pkl")
 scaler = joblib.load("models/scaler.pkl")
@@ -26,7 +29,7 @@ le_education = joblib.load("models/le_education.pkl")
 le_self_employed = joblib.load("models/le_self_employed.pkl")
 le_status = joblib.load("models/le_status.pkl")
 feature_columns = joblib.load("models/feature_columns.pkl")
-import json
+
 
 def load_feature_importance():
     try:
@@ -35,8 +38,10 @@ def load_feature_importance():
     except FileNotFoundError:
         return []
 
+
 # Initialize database (creates table if it doesn't exist yet)
 init_db()
+migrate_db()
 
 
 def get_risk_tier(probability):
@@ -47,6 +52,31 @@ def get_risk_tier(probability):
         return "Medium Risk"
     else:
         return "High Risk"
+
+
+def check_consistency_flags(data):
+    """Rule-based checks for suspicious/inconsistent applicant data."""
+    flags = []
+    income = data["income_annum"]
+    loan = data["loan_amount"]
+    total_assets = (
+        data["residential_assets_value"] + data["commercial_assets_value"]
+        + data["luxury_assets_value"] + data["bank_asset_value"]
+    )
+
+    if income > 0 and loan > income * 10:
+        flags.append("Loan amount unusually high vs. income (>10x)")
+
+    if income > 0 and total_assets > income * 30:
+        flags.append("Asset values unusually high vs. income (>30x)")
+
+    if income > 0 and total_assets < income * 0.05:
+        flags.append("Very low assets relative to income (possible missing/false asset info)")
+
+    if data["no_of_dependents"] > 10:
+        flags.append("Unusually high number of dependents")
+
+    return flags
 
 
 @app.route("/", methods=["GET"])
@@ -105,12 +135,15 @@ def predict():
     feature_importance = load_feature_importance()
     top_factors = []
     if feature_importance:
-        for item in feature_importance[:3]:  # top 3 overall-important features
+        for item in feature_importance[:3]:
             feat = item["feature"]
             top_factors.append({
                 "feature": feat.replace("_", " ").title(),
                 "value": input_dict[feat],
             })
+
+    # ----- Consistency / suspicious-data checks -----
+    flags = check_consistency_flags(input_dict)
 
     # ----- Save to database (the "sheet") -----
     save_application({
@@ -129,6 +162,7 @@ def predict():
         "prediction": prediction_label,
         "probability": round(approval_probability * 100, 2),
         "risk_tier": risk_tier,
+        "flags": "; ".join(flags),
     })
 
     return render_template(
@@ -138,6 +172,7 @@ def predict():
         probability=round(approval_probability * 100, 2),
         risk_tier=risk_tier,
         top_factors=top_factors,
+        flags=flags,
     )
 
 
@@ -167,11 +202,13 @@ def records():
     applications = get_all_applications()
     return render_template("records.html", applications=applications)
 
+
 @app.route("/insights", methods=["GET"])
 @login_required
 def insights():
     feature_importance = load_feature_importance()
     return render_template("insights.html", feature_importance=feature_importance)
+
 
 if __name__ == "__main__":
     import os

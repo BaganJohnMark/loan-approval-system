@@ -4,17 +4,17 @@
     <meta charset="UTF-8">
     <title>Loan Approval Prediction System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container">
         <div class="card">
             <div class="brand-row">
-    <img src="/static/logo.svg" alt="Logo" width="36" height="36">
-    <span class="brand-name">CREDORA</span>
-</div>
+                <img src="/static/logo.svg" alt="Logo" width="36" height="36">
+                <span class="brand-name">CREDORA</span>
+            </div>
             <h1>Loan Approval Prediction</h1>
             <p class="subtitle">Fill in the applicant's financial profile below</p>
 
@@ -55,11 +55,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Annual Income (₱)</label>
-                        <input type="number" name="income_annum" min="0" required>
+                        <input type="text" inputmode="numeric" class="money-input" name="income_annum" required>
                     </div>
                     <div class="form-group">
                         <label>Loan Amount Requested (₱)</label>
-                        <input type="number" name="loan_amount" min="0" required>
+                        <input type="text" inputmode="numeric" class="money-input" name="loan_amount" required>
                     </div>
                 </div>
 
@@ -73,37 +73,94 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Residential Assets</label>
-                        <input type="number" name="residential_assets_value" min="0" required>
+                        <input type="text" inputmode="numeric" class="money-input" name="residential_assets_value" required>
                     </div>
                     <div class="form-group">
                         <label>Commercial Assets</label>
-                        <input type="number" name="commercial_assets_value" min="0" required>
+                        <input type="text" inputmode="numeric" class="money-input" name="commercial_assets_value" required>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Luxury Assets</label>
-                        <input type="number" name="luxury_assets_value" min="0" required>
+                        <input type="text" inputmode="numeric" class="money-input" name="luxury_assets_value" required>
                     </div>
                     <div class="form-group">
                         <label>Bank Assets</label>
-                        <input type="number" name="bank_asset_value" min="0" required>
+                        <input type="text" inputmode="numeric" class="money-input" name="bank_asset_value" required>
                     </div>
                 </div>
 
                 <button type="submit" id="submitBtn">Predict Loan Approval</button>
             </form>
 
+            <a class="records-link" href="/records">View All Applicant Records →</a>
+
             <script>
-                document.querySelector("form").addEventListener("submit", function () {
+                // ----- Auto-format money inputs with commas -----
+                document.querySelectorAll(".money-input").forEach(function (input) {
+                    input.addEventListener("input", function () {
+                        let raw = input.value.replace(/,/g, "").replace(/[^0-9]/g, "");
+                        input.value = raw ? Number(raw).toLocaleString("en-US") : "";
+                    });
+                });
+
+                function rawNumber(name) {
+                    const val = document.querySelector(`[name="${name}"]`).value;
+                    return Number(val.replace(/,/g, "")) || 0;
+                }
+
+                // ----- Check for suspicious/inconsistent data before submitting -----
+                function checkSuspiciousData() {
+                    const income = rawNumber("income_annum");
+                    const loan = rawNumber("loan_amount");
+                    const dependents = Number(document.querySelector('[name="no_of_dependents"]').value) || 0;
+                    const totalAssets =
+                        rawNumber("residential_assets_value") +
+                        rawNumber("commercial_assets_value") +
+                        rawNumber("luxury_assets_value") +
+                        rawNumber("bank_asset_value");
+
+                    const warnings = [];
+                    if (income > 0 && loan > income * 10) {
+                        warnings.push("Ang hiniling na loan amount ay higit 10x ng annual income.");
+                    }
+                    if (income > 0 && totalAssets > income * 30) {
+                        warnings.push("Ang kabuuang asset value ay hindi pangkaraniwang mataas kumpara sa income.");
+                    }
+                    if (income > 0 && totalAssets < income * 0.05) {
+                        warnings.push("Napakababa ng asset value kumpara sa income — posibleng kulang o maling datos.");
+                    }
+                    if (dependents > 10) {
+                        warnings.push("Hindi pangkaraniwang bilang ng dependents.");
+                    }
+                    return warnings;
+                }
+
+                document.querySelector("form").addEventListener("submit", function (e) {
+                    const warnings = checkSuspiciousData();
+                    if (warnings.length > 0) {
+                        const message =
+                            "⚠️ May napansin kaming hindi pangkaraniwang datos:\n\n" +
+                            warnings.map(w => "• " + w).join("\n") +
+                            "\n\nSigurado ka bang ipagpatuloy?";
+                        if (!confirm(message)) {
+                            e.preventDefault();
+                            return;
+                        }
+                    }
+
+                    // Strip commas from money fields before submitting to server
+                    document.querySelectorAll(".money-input").forEach(function (input) {
+                        input.value = input.value.replace(/,/g, "");
+                    });
+
                     const btn = document.getElementById("submitBtn");
                     btn.disabled = true;
                     btn.textContent = "Analyzing Profile...";
                 });
             </script>
-
-            <a class="records-link" href="/records">View All Applicant Records →</a>
         </div>
     </div>
 </body>
