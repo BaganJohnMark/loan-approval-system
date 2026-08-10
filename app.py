@@ -10,7 +10,7 @@ app.secret_key = "change-this-to-a-random-secret-key-later"
 
 # ----- Admin credentials (simple version) -----
 ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin123"
+ADMIN_PASSWORD = "adminkami"
 
 # ----- Login-required decorator -----
 def login_required(f):
