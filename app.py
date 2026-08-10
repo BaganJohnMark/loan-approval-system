@@ -79,6 +79,41 @@ def check_consistency_flags(data):
     return flags
 
 
+def generate_rejection_reasons(data, prediction, probability):
+    """Human-readable explanation of why the applicant was rejected."""
+    if prediction != "Rejected":
+        return []
+
+    reasons = []
+    cibil = data["cibil_score"]
+    income = data["income_annum"]
+    loan = data["loan_amount"]
+    total_assets = (
+        data["residential_assets_value"] + data["commercial_assets_value"]
+        + data["luxury_assets_value"] + data["bank_asset_value"]
+    )
+
+    if cibil < 550:
+        reasons.append(f"Napakababa ng CIBIL/credit score ({cibil}) — malaking senyales ng mahinang kasaysayan sa pagbabayad ng utang. Ito ang pinaka-malaking factor (80%+) sa desisyon.")
+    elif cibil < 700:
+        reasons.append(f"Katamtaman lang ang CIBIL score ({cibil}) — hindi ito sapat na kumpiyansa para sa laki ng hiniling na loan.")
+
+    if income > 0 and loan > income * 8:
+        ratio = round(loan / income, 1)
+        reasons.append(f"Ang hiniling na loan amount ay {ratio}x ng annual income — itinuturing na sobrang laki kumpara sa kakayahang magbayad.")
+
+    if income > 0 and total_assets < income * 0.5:
+        reasons.append("Kulang ang assets/collateral kumpara sa income — walang sapat na backup kung sakaling hindi makabayad.")
+
+    if data["loan_term"] <= 4 and loan > income * 4:
+        reasons.append("Maikli ang loan term kumbinado sa malaking loan amount — nagreresulta sa mataas na buwanang bayad.")
+
+    if not reasons:
+        reasons.append(f"Batay sa kabuuang financial profile, {round(probability*100,1)}% lang ang approval probability — mas mataas ang overall risk kaysa sa itinakdang threshold.")
+
+    return reasons
+
+
 @app.route("/", methods=["GET"])
 def home():
     return render_template("form.html")
@@ -145,6 +180,9 @@ def predict():
     # ----- Consistency / suspicious-data checks -----
     flags = check_consistency_flags(input_dict)
 
+    # ----- Human-readable rejection explanation -----
+    rejection_reasons = generate_rejection_reasons(input_dict, prediction_label, approval_probability)
+
     # ----- Save to database (the "sheet") -----
     save_application({
         "applicant_name": applicant_name,
@@ -173,6 +211,7 @@ def predict():
         risk_tier=risk_tier,
         top_factors=top_factors,
         flags=flags,
+        rejection_reasons=rejection_reasons,
     )
 
 
