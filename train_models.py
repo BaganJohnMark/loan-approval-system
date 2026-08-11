@@ -128,3 +128,14 @@ if importances is not None:
         print(f"  {f}: {i:.4f}")
 
     print("\nSaved to models/feature_importance.json")
+    # ----- Save ALL models for consensus view -----
+model_filenames = {
+    "Logistic Regression": "logistic_regression",
+    "Decision Tree": "decision_tree",
+    "Random Forest": "random_forest",
+    "XGBoost": "xgboost",
+}
+for name, model_obj in models.items():
+    filename = f"models/model_{model_filenames[name]}.pkl"
+    joblib.dump(model_obj, filename)
+    print(f"Saved {name} to {filename}")

@@ -28,6 +28,12 @@ def login_required(f):
 
 
 model = joblib.load("models/best_model.pkl")
+all_models = {
+    "Logistic Regression": joblib.load("models/model_logistic_regression.pkl"),
+    "Decision Tree": joblib.load("models/model_decision_tree.pkl"),
+    "Random Forest": joblib.load("models/model_random_forest.pkl"),
+    "XGBoost": joblib.load("models/model_xgboost.pkl"),
+}
 scaler = joblib.load("models/scaler.pkl")
 le_education = joblib.load("models/le_education.pkl")
 le_self_employed = joblib.load("models/le_self_employed.pkl")
@@ -118,6 +124,31 @@ def run_prediction(input_dict):
     return prediction_label, approval_probability, risk_tier
 
 
+def get_model_consensus(input_dict):
+    """Run all 4 models on the same applicant and compare their votes."""
+    input_row = [input_dict[col] for col in feature_columns]
+    input_scaled = scaler.transform([input_row])
+    approved_index = list(le_status.classes_).index("Approved")
+
+    votes = []
+    for name, m in all_models.items():
+        pred_encoded = m.predict(input_scaled)[0]
+        pred_proba = m.predict_proba(input_scaled)[0]
+        label = le_status.inverse_transform([pred_encoded])[0]
+        prob = round(float(pred_proba[approved_index]) * 100, 1)
+        votes.append({"model": name, "prediction": label, "probability": prob})
+
+    approved_count = sum(1 for v in votes if v["prediction"] == "Approved")
+    if approved_count == 4 or approved_count == 0:
+        agreement = "High Confidence — Lahat ng models ay sumasang-ayon"
+    elif approved_count == 3 or approved_count == 1:
+        agreement = "Moderate Confidence — Karamihan sumasang-ayon"
+    else:
+        agreement = "Model Disagreement — Recommend Manual Review"
+
+    return votes, agreement
+
+
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "pdf"}
 
 def allowed_file(filename):
@@ -177,6 +208,7 @@ def predict():
     }
 
     prediction_label, approval_probability, risk_tier = run_prediction(input_dict)
+    model_votes, model_agreement = get_model_consensus(input_dict)
 
     feature_importance = load_feature_importance()
     top_factors = []
@@ -227,6 +259,8 @@ def predict():
         rejection_reasons=rejection_reasons,
         base_input=json.dumps(input_dict),
         max_income=income_annum,
+        model_votes=model_votes,
+        model_agreement=model_agreement,
     )
 
 
