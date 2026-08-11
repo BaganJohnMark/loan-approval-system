@@ -3,14 +3,21 @@ from functools import wraps
 import joblib
 import numpy as np
 import json
-from database import init_db, migrate_db, save_application, get_all_applications
+import os
+import uuid
+from werkzeug.utils import secure_filename
+from database import init_db, migrate_db, save_application, get_all_applications, set_verified
 
 app = Flask(__name__)
 app.secret_key = "change-this-to-a-random-secret-key-later"
 
+UPLOAD_FOLDER = os.path.join("static", "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 # ----- Admin credentials (simple version) -----
 ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "adminkami"
+ADMIN_PASSWORD = "admin123"
 
 # ----- Login-required decorator -----
 def login_required(f):
@@ -114,6 +121,12 @@ def generate_rejection_reasons(data, prediction, probability):
     return reasons
 
 
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "pdf"}
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 @app.route("/", methods=["GET"])
 def home():
     return render_template("form.html")
@@ -134,6 +147,23 @@ def predict():
     commercial_assets_value = int(request.form.get("commercial_assets_value"))
     luxury_assets_value = int(request.form.get("luxury_assets_value"))
     bank_asset_value = int(request.form.get("bank_asset_value"))
+
+    # ----- Personal / identity info -----
+    region = request.form.get("region", "")
+    province = request.form.get("province", "")
+    city = request.form.get("city", "")
+    id_type = request.form.get("id_type", "")
+    id_number = request.form.get("id_number", "")
+
+    # ----- Handle ID photo upload -----
+    id_photo_path = ""
+    file = request.files.get("id_photo")
+    if file and file.filename and allowed_file(file.filename):
+        ext = file.filename.rsplit(".", 1)[1].lower()
+        unique_name = f"{uuid.uuid4().hex}.{ext}"
+        save_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
+        file.save(save_path)
+        id_photo_path = f"uploads/{unique_name}"
 
     # ----- Encode categorical fields the same way as training -----
     education_encoded = le_education.transform([education])[0]
@@ -161,12 +191,10 @@ def predict():
     pred_proba = model.predict_proba(input_scaled)[0]
 
     prediction_label = le_status.inverse_transform([pred_encoded])[0]
-    # Probability of the "Approved" class specifically
     approved_index = list(le_status.classes_).index("Approved")
     approval_probability = float(pred_proba[approved_index])
     risk_tier = get_risk_tier(approval_probability)
 
-    # ----- Build top contributing factors for this applicant -----
     feature_importance = load_feature_importance()
     top_factors = []
     if feature_importance:
@@ -177,13 +205,9 @@ def predict():
                 "value": input_dict[feat],
             })
 
-    # ----- Consistency / suspicious-data checks -----
     flags = check_consistency_flags(input_dict)
-
-    # ----- Human-readable rejection explanation -----
     rejection_reasons = generate_rejection_reasons(input_dict, prediction_label, approval_probability)
 
-    # ----- Save to database (the "sheet") -----
     save_application({
         "applicant_name": applicant_name,
         "no_of_dependents": no_of_dependents,
@@ -201,6 +225,12 @@ def predict():
         "probability": round(approval_probability * 100, 2),
         "risk_tier": risk_tier,
         "flags": "; ".join(flags),
+        "region": region,
+        "province": province,
+        "city": city,
+        "id_type": id_type,
+        "id_number": id_number,
+        "id_photo": id_photo_path,
     })
 
     return render_template(
@@ -240,6 +270,13 @@ def logout():
 def records():
     applications = get_all_applications()
     return render_template("records.html", applications=applications)
+
+
+@app.route("/verify/<int:app_id>", methods=["POST"])
+@login_required
+def verify(app_id):
+    set_verified(app_id, 1)
+    return redirect(url_for("records"))
 
 
 @app.route("/insights", methods=["GET"])

@@ -18,10 +18,52 @@
             <h1>Loan Approval Prediction</h1>
             <p class="subtitle">Fill in the applicant's financial profile below</p>
 
-            <form action="/predict" method="POST">
+            <form action="/predict" method="POST" enctype="multipart/form-data"></form>
                 <div class="form-group">
                     <label>Applicant Name</label>
                     <input type="text" name="applicant_name" required>
+                </div>
+                <h3 class="section-title">Address</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Region</label>
+                        <input type="text" name="region" placeholder="e.g. NCR" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Province</label>
+                        <input type="text" name="province" placeholder="e.g. Metro Manila" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>City / Municipality</label>
+                    <input type="text" name="city" placeholder="e.g. Quezon City" required>
+                </div>
+
+                <h3 class="section-title">Identity Verification</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Valid ID Type</label>
+                        <select name="id_type" required>
+                            <option value="Philippine National ID">Philippine National ID</option>
+                            <option value="Driver's License">Driver's License</option>
+                            <option value="Passport">Passport</option>
+                            <option value="UMID">UMID</option>
+                            <option value="SSS ID">SSS ID</option>
+                            <option value="Postal ID">Postal ID</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ID Number</label>
+                        <input type="text" name="id_number" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Upload Photo of Valid ID</label>
+                    <input type="file" name="id_photo" accept=".jpg,.jpeg,.png,.pdf" required>
                 </div>
 
                 <div class="form-row">

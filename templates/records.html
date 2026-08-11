@@ -26,11 +26,14 @@
                         <tr>
                             <th>ID</th>
                             <th>Name</th>
+                            <th>Location</th>
+                            <th>ID Type / Number</th>
+                            <th>ID Photo</th>
+                            <th>Verified</th>
                             <th>Income</th>
                             <th>Loan Amount</th>
                             <th>CIBIL</th>
                             <th>Prediction</th>
-                            <th>Probability</th>
                             <th>Risk Tier</th>
                             <th>Flags</th>
                             <th>Date</th>
@@ -41,6 +44,24 @@
                         <tr>
                             <td>{{ app["id"] }}</td>
                             <td>{{ app["applicant_name"] }}</td>
+                            <td>{{ app["city"] }}, {{ app["province"] }}</td>
+                            <td>{{ app["id_type"] }}<br>{{ app["id_number"] }}</td>
+                            <td>
+                                {% if app["id_photo"] %}
+                                    <a href="/static/{{ app['id_photo'] }}" target="_blank">View ID</a>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if app["verified"] %}
+                                    <span class="tag approved">✓ Verified</span>
+                                {% else %}
+                                    <form action="/verify/{{ app['id'] }}" method="POST" style="margin:0;">
+                                        <button type="submit" style="width:auto; padding:6px 12px; font-size:11px; margin:0;">Mark Verified</button>
+                                    </form>
+                                {% endif %}
+                            </td>
                             <td>₱{{ "{:,.0f}".format(app["income_annum"]) }}</td>
                             <td>₱{{ "{:,.0f}".format(app["loan_amount"]) }}</td>
                             <td>{{ app["cibil_score"] }}</td>
@@ -51,7 +72,6 @@
                                     <span class="tag rejected">Rejected</span>
                                 {% endif %}
                             </td>
-                            <td>{{ app["probability"] }}%</td>
                             <td>{{ app["risk_tier"] }}</td>
                             <td>
                                 {% if app["flags"] %}
@@ -63,7 +83,7 @@
                             <td>{{ app["created_at"] }}</td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="10">No applications yet.</td></tr>
+                        <tr><td colspan="13">No applications yet.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
