@@ -16,11 +16,13 @@
                 <span class="brand-name">CREDORA</span>
             </div>
 
-            {% if prediction == "Approved" %}
-                <div class="result-badge approved">✓ APPROVED</div>
-            {% else %}
-                <div class="result-badge rejected">✗ REJECTED</div>
-            {% endif %}
+            <div id="resultBadge">
+                {% if prediction == "Approved" %}
+                    <div class="result-badge approved">✓ APPROVED</div>
+                {% else %}
+                    <div class="result-badge rejected">✗ REJECTED</div>
+                {% endif %}
+            </div>
 
             <h2>{{ applicant_name }}</h2>
 
@@ -54,7 +56,7 @@
                         stroke-width="10" stroke-linecap="round"
                         stroke-dasharray="377" stroke-dashoffset="377"
                         transform="rotate(-90 70 70)"/>
-                    <text x="70" y="65" text-anchor="middle" font-family="IBM Plex Mono" font-size="22" font-weight="600" fill="#16241F">{{ probability }}%</text>
+                    <text id="probText" x="70" y="65" text-anchor="middle" font-family="IBM Plex Mono" font-size="22" font-weight="600" fill="#16241F">{{ probability }}%</text>
                     <text x="70" y="84" text-anchor="middle" font-family="Inter" font-size="10" letter-spacing="1" fill="#6B7A75">APPROVAL ODDS</text>
                 </svg>
             </div>
@@ -62,7 +64,7 @@
             <div class="result-details">
                 <div class="detail-row">
                     <span>Risk Tier</span>
-                    <strong class="risk-{{ risk_tier|replace(' ', '-')|lower }}">{{ risk_tier }}</strong>
+                    <strong id="riskTierText" class="risk-{{ risk_tier|replace(' ', '-')|lower }}">{{ risk_tier }}</strong>
                 </div>
             </div>
 
@@ -78,6 +80,21 @@
             </div>
             {% endif %}
 
+            <div class="section-title">What-If Simulator</div>
+            <p style="font-size:12px; color:#6B7A75; margin-bottom:16px;">I-adjust ang mga sliders para makita kung paano magbabago ang desisyon.</p>
+
+            <div class="form-group">
+                <label>Loan Amount: <span id="loanAmountLabel"></span></label>
+                <input type="range" id="loanAmountSlider" min="100000" style="width:100%;">
+            </div>
+
+            <div class="form-group">
+                <label>CIBIL Score: <span id="cibilLabel"></span></label>
+                <input type="range" id="cibilSlider" min="300" max="900" style="width:100%;">
+            </div>
+
+            <div id="simulatorResult" style="text-align:center; font-size:13px; color:#6B7A75; margin:10px 0 20px; min-height:20px;"></div>
+
             <div class="button-row">
                 <a href="/" class="btn">New Prediction</a>
                 <a href="/records" class="btn btn-secondary">View Records</a>
@@ -86,17 +103,81 @@
     </div>
 
     <script>
+        const baseInput = {{ base_input|safe }};
+        const circumference = 377;
+
         window.addEventListener("DOMContentLoaded", () => {
             const circle = document.getElementById("progressCircle");
-            const circumference = 377;
             const probability = {{ probability }};
             const offset = circumference - (probability / 100) * circumference;
-
             circle.style.transition = "stroke-dashoffset 1.4s ease-out";
-            setTimeout(() => {
-                circle.style.strokeDashoffset = offset;
-            }, 150);
+            setTimeout(() => { circle.style.strokeDashoffset = offset; }, 150);
+
+            const loanSlider = document.getElementById("loanAmountSlider");
+            const cibilSlider = document.getElementById("cibilSlider");
+
+            loanSlider.max = baseInput.loan_amount * 2;
+            loanSlider.value = baseInput.loan_amount;
+            cibilSlider.value = baseInput.cibil_score;
+
+            updateLabels();
         });
+
+        function updateLabels() {
+            const loan = Number(document.getElementById("loanAmountSlider").value);
+            const cibil = Number(document.getElementById("cibilSlider").value);
+            document.getElementById("loanAmountLabel").textContent = "₱" + loan.toLocaleString("en-US");
+            document.getElementById("cibilLabel").textContent = cibil;
+        }
+
+        let debounceTimer;
+        function runSimulation() {
+            updateLabels();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const modified = { ...baseInput };
+                modified.loan_amount = Number(document.getElementById("loanAmountSlider").value);
+                modified.cibil_score = Number(document.getElementById("cibilSlider").value);
+
+                document.getElementById("simulatorResult").textContent = "Kinakalkula...";
+
+                fetch("/simulate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(modified)
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) {
+                            document.getElementById("simulatorResult").textContent = "Error: " + data.error;
+                            return;
+                        }
+                        const circle = document.getElementById("progressCircle");
+                        const offset = circumference - (data.probability / 100) * circumference;
+                        circle.style.stroke = data.prediction === "Approved" ? "#1F6F5C" : "#A5401F";
+                        circle.style.strokeDashoffset = offset;
+                        document.getElementById("probText").textContent = data.probability + "%";
+
+                        const riskEl = document.getElementById("riskTierText");
+                        riskEl.textContent = data.risk_tier;
+                        riskEl.className = "risk-" + data.risk_tier.replace(" ", "-").toLowerCase();
+
+                        const badge = data.prediction === "Approved"
+                            ? '<div class="result-badge approved">✓ APPROVED</div>'
+                            : '<div class="result-badge rejected">✗ REJECTED</div>';
+                        document.getElementById("resultBadge").innerHTML = badge;
+
+                        document.getElementById("simulatorResult").textContent =
+                            "Simulated result: " + data.prediction + " (" + data.probability + "%)";
+                    })
+                    .catch(err => {
+                        document.getElementById("simulatorResult").textContent = "Error sa simulation.";
+                    });
+            }, 300);
+        }
+
+        document.getElementById("loanAmountSlider").addEventListener("input", runSimulation);
+        document.getElementById("cibilSlider").addEventListener("input", runSimulation);
     </script>
 </body>
 </html>

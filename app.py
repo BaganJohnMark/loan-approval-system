@@ -1,11 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from functools import wraps
 import joblib
 import numpy as np
 import json
 import os
 import uuid
-from werkzeug.utils import secure_filename
 from database import init_db, migrate_db, save_application, get_all_applications, set_verified
 
 app = Flask(__name__)
@@ -15,11 +14,10 @@ UPLOAD_FOLDER = os.path.join("static", "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# ----- Admin credentials (simple version) -----
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin123"
 
-# ----- Login-required decorator -----
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -29,7 +27,6 @@ def login_required(f):
     return decorated_function
 
 
-# ----- Load trained model and preprocessing objects -----
 model = joblib.load("models/best_model.pkl")
 scaler = joblib.load("models/scaler.pkl")
 le_education = joblib.load("models/le_education.pkl")
@@ -46,13 +43,11 @@ def load_feature_importance():
         return []
 
 
-# Initialize database (creates table if it doesn't exist yet)
 init_db()
 migrate_db()
 
 
 def get_risk_tier(probability):
-    """Classify risk tier based on model's approval probability."""
     if probability >= 0.80:
         return "Low Risk"
     elif probability >= 0.50:
@@ -62,7 +57,6 @@ def get_risk_tier(probability):
 
 
 def check_consistency_flags(data):
-    """Rule-based checks for suspicious/inconsistent applicant data."""
     flags = []
     income = data["income_annum"]
     loan = data["loan_amount"]
@@ -70,27 +64,20 @@ def check_consistency_flags(data):
         data["residential_assets_value"] + data["commercial_assets_value"]
         + data["luxury_assets_value"] + data["bank_asset_value"]
     )
-
     if income > 0 and loan > income * 10:
         flags.append("Loan amount unusually high vs. income (>10x)")
-
     if income > 0 and total_assets > income * 30:
         flags.append("Asset values unusually high vs. income (>30x)")
-
     if income > 0 and total_assets < income * 0.05:
         flags.append("Very low assets relative to income (possible missing/false asset info)")
-
     if data["no_of_dependents"] > 10:
         flags.append("Unusually high number of dependents")
-
     return flags
 
 
 def generate_rejection_reasons(data, prediction, probability):
-    """Human-readable explanation of why the applicant was rejected."""
     if prediction != "Rejected":
         return []
-
     reasons = []
     cibil = data["cibil_score"]
     income = data["income_annum"]
@@ -99,26 +86,36 @@ def generate_rejection_reasons(data, prediction, probability):
         data["residential_assets_value"] + data["commercial_assets_value"]
         + data["luxury_assets_value"] + data["bank_asset_value"]
     )
-
     if cibil < 550:
         reasons.append(f"Napakababa ng CIBIL/credit score ({cibil}) — malaking senyales ng mahinang kasaysayan sa pagbabayad ng utang. Ito ang pinaka-malaking factor (80%+) sa desisyon.")
     elif cibil < 700:
         reasons.append(f"Katamtaman lang ang CIBIL score ({cibil}) — hindi ito sapat na kumpiyansa para sa laki ng hiniling na loan.")
-
     if income > 0 and loan > income * 8:
         ratio = round(loan / income, 1)
         reasons.append(f"Ang hiniling na loan amount ay {ratio}x ng annual income — itinuturing na sobrang laki kumpara sa kakayahang magbayad.")
-
     if income > 0 and total_assets < income * 0.5:
         reasons.append("Kulang ang assets/collateral kumpara sa income — walang sapat na backup kung sakaling hindi makabayad.")
-
     if data["loan_term"] <= 4 and loan > income * 4:
         reasons.append("Maikli ang loan term kumbinado sa malaking loan amount — nagreresulta sa mataas na buwanang bayad.")
-
     if not reasons:
         reasons.append(f"Batay sa kabuuang financial profile, {round(probability*100,1)}% lang ang approval probability — mas mataas ang overall risk kaysa sa itinakdang threshold.")
-
     return reasons
+
+
+def run_prediction(input_dict):
+    """Core prediction logic — shared by /predict and /simulate."""
+    input_row = [input_dict[col] for col in feature_columns]
+    input_scaled = scaler.transform([input_row])
+
+    pred_encoded = model.predict(input_scaled)[0]
+    pred_proba = model.predict_proba(input_scaled)[0]
+
+    prediction_label = le_status.inverse_transform([pred_encoded])[0]
+    approved_index = list(le_status.classes_).index("Approved")
+    approval_probability = float(pred_proba[approved_index])
+    risk_tier = get_risk_tier(approval_probability)
+
+    return prediction_label, approval_probability, risk_tier
 
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "pdf"}
@@ -134,7 +131,6 @@ def home():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    # ----- Get form data -----
     applicant_name = request.form.get("applicant_name")
     no_of_dependents = int(request.form.get("no_of_dependents"))
     education = request.form.get("education")
@@ -148,14 +144,12 @@ def predict():
     luxury_assets_value = int(request.form.get("luxury_assets_value"))
     bank_asset_value = int(request.form.get("bank_asset_value"))
 
-    # ----- Personal / identity info -----
     region = request.form.get("region", "")
     province = request.form.get("province", "")
     city = request.form.get("city", "")
     id_type = request.form.get("id_type", "")
     id_number = request.form.get("id_number", "")
 
-    # ----- Handle ID photo upload -----
     id_photo_path = ""
     file = request.files.get("id_photo")
     if file and file.filename and allowed_file(file.filename):
@@ -165,11 +159,9 @@ def predict():
         file.save(save_path)
         id_photo_path = f"uploads/{unique_name}"
 
-    # ----- Encode categorical fields the same way as training -----
-    education_encoded = le_education.transform([education])[0]
-    self_employed_encoded = le_self_employed.transform([self_employed])[0]
+    education_encoded = int(le_education.transform([education])[0])
+    self_employed_encoded = int(le_self_employed.transform([self_employed])[0])
 
-    # ----- Build feature vector in the exact same column order as training -----
     input_dict = {
         "no_of_dependents": no_of_dependents,
         "education": education_encoded,
@@ -183,17 +175,8 @@ def predict():
         "luxury_assets_value": luxury_assets_value,
         "bank_asset_value": bank_asset_value,
     }
-    input_row = [input_dict[col] for col in feature_columns]
-    input_scaled = scaler.transform([input_row])
 
-    # ----- Predict -----
-    pred_encoded = model.predict(input_scaled)[0]
-    pred_proba = model.predict_proba(input_scaled)[0]
-
-    prediction_label = le_status.inverse_transform([pred_encoded])[0]
-    approved_index = list(le_status.classes_).index("Approved")
-    approval_probability = float(pred_proba[approved_index])
-    risk_tier = get_risk_tier(approval_probability)
+    prediction_label, approval_probability, risk_tier = run_prediction(input_dict)
 
     feature_importance = load_feature_importance()
     top_factors = []
@@ -242,7 +225,37 @@ def predict():
         top_factors=top_factors,
         flags=flags,
         rejection_reasons=rejection_reasons,
+        base_input=json.dumps(input_dict),
+        max_income=income_annum,
     )
+
+
+@app.route("/simulate", methods=["POST"])
+def simulate():
+    """Re-run prediction with modified loan_amount / cibil_score for the What-If simulator."""
+    data = request.get_json()
+    try:
+        input_dict = {
+            "no_of_dependents": int(data["no_of_dependents"]),
+            "education": int(data["education"]),
+            "self_employed": int(data["self_employed"]),
+            "income_annum": int(data["income_annum"]),
+            "loan_amount": int(data["loan_amount"]),
+            "loan_term": int(data["loan_term"]),
+            "cibil_score": int(data["cibil_score"]),
+            "residential_assets_value": int(data["residential_assets_value"]),
+            "commercial_assets_value": int(data["commercial_assets_value"]),
+            "luxury_assets_value": int(data["luxury_assets_value"]),
+            "bank_asset_value": int(data["bank_asset_value"]),
+        }
+        prediction_label, approval_probability, risk_tier = run_prediction(input_dict)
+        return jsonify({
+            "prediction": prediction_label,
+            "probability": round(approval_probability * 100, 2),
+            "risk_tier": risk_tier,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 
 @app.route("/login", methods=["GET", "POST"])
