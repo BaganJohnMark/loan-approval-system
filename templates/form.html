@@ -97,7 +97,8 @@
       </div>
       <div class="flex flex-col gap-stack-sm md:col-span-2">
         <label class="field-label">City / Municipality</label>
-        <input class="field-input" name="city" placeholder="e.g. Quezon City" type="text" required/>
+        <input class="field-input" name="city" id="cityInput" placeholder="Piliin muna ang Probinsya, o mag-type" type="text" list="cityList" required/>
+        <datalist id="cityList"></datalist>
       </div>
     </div>
   </section>
@@ -255,16 +256,20 @@
   const regionSelect = document.getElementById("regionSelect");
   const provinceSelect = document.getElementById("provinceSelect");
 
+  
+  
+
   Object.keys(phRegions).forEach(function (regionKey) {
     const opt = document.createElement("option");
     opt.value = regionKey;
     opt.textContent = regionLabels[regionKey];
     regionSelect.appendChild(opt);
   });
-
-  regionSelect.addEventListener("change", function () {
+   regionSelect.addEventListener("change", function () {
     const selectedRegion = this.value;
     provinceSelect.innerHTML = "";
+    cityList.innerHTML = "";
+    cityInput.value = "";
 
     if (!selectedRegion) {
       provinceSelect.disabled = true;
@@ -289,6 +294,50 @@
     });
   });
 
+  provinceSelect.addEventListener("change", function () {
+    const selectedProvince = this.value;
+    cityList.innerHTML = "";
+    cityInput.value = "";
+
+    if (!selectedProvince) {
+      cityInput.placeholder = "Piliin muna ang Probinsya, o mag-type";
+      return;
+    }
+
+    const cities = phCities[selectedProvince];
+    if (cities && cities.length > 0) {
+      cities.forEach(function (city) {
+        const opt = document.createElement("option");
+        opt.value = city;
+        cityList.appendChild(opt);
+      });
+      cityInput.placeholder = "Piliin sa listahan o mag-type ng ibang bayan/lungsod";
+    } else {
+      cityInput.placeholder = "I-type ang bayan/lungsod";
+    }
+  });
+
+    if (!selectedRegion) {
+      provinceSelect.disabled = true;
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "-- Piliin muna ang Rehiyon --";
+      provinceSelect.appendChild(opt);
+      return;
+    }
+
+    provinceSelect.disabled = false;
+    const placeholderOpt = document.createElement("option");
+    placeholderOpt.value = "";
+    placeholderOpt.textContent = "-- Piliin ang Probinsya --";
+    provinceSelect.appendChild(placeholderOpt);
+
+    phRegions[selectedRegion].forEach(function (province) {
+      const opt = document.createElement("option");
+      opt.value = province;
+      opt.textContent = province;
+      provinceSelect.appendChild(opt);
+    });
   // ----- Auto-format money inputs with commas -----
   document.querySelectorAll(".money-input").forEach(function (input) {
     input.addEventListener("input", function () {
