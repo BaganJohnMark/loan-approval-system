@@ -1,41 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Login</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Login - CREDORA</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&family=JetBrains+Mono:wght@500&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+  body { font-family: 'Hanken Grotesk', sans-serif; }
+  .field-input {
+    width: 100%; background: #ffffff; border: 1px solid #E2E8F0; border-radius: 0.25rem;
+    padding: 0.75rem 1rem; font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    color: #1e1b18; transition: border-color .15s, box-shadow .15s; outline: none;
+  }
+  .field-input:focus { border-color: #1A5319; box-shadow: 0 0 0 1px #1A5319; }
+  .field-label { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #605e5b; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in-card { opacity: 0; animation: fadeInUp 0.6s ease-out forwards; }
+</style>
 </head>
-<body>
-    <div class="container">
-        <div class="card">
-            <div class="brand-row">
-                <img src="/static/logo.svg" alt="Logo" width="36" height="36">
-                <span class="brand-name">CREDORA</span>
-            </div>
-            <h1>Admin Login</h1>
-            <p class="subtitle">Sign in to view applicant records</p>
+<body class="bg-[#1A5319] min-h-screen flex items-center justify-center px-4 py-10">
+<div class="bg-[#FCF8F3] rounded-lg shadow-lg border border-[#E2E8F0] max-w-[420px] w-full p-8 md:p-10 fade-in-card">
+  <div class="flex items-center gap-2 mb-2 justify-center">
+    <span class="material-symbols-outlined text-[#1A5319] text-2xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+    <span class="field-label">CREDORA</span>
+  </div>
+  <h1 class="font-semibold text-center mb-1" style="font-family:'Source Serif 4', serif; font-size:26px; color:#1A5319;">Admin Login</h1>
+  <p class="text-center text-[#605e5b] text-sm mb-8">Sign in to view applicant records</p>
 
-            {% if error %}
-                <p style="color:#dc2626; margin-bottom:14px; font-size:14px;">{{ error }}</p>
-            {% endif %}
+  {% if error %}
+  <div class="bg-[#FBEAE2] border border-[#A5401F] text-[#A5401F] text-sm rounded px-4 py-3 mb-5 text-center">
+    {{ error }}
+  </div>
+  {% endif %}
 
-            <form action="/login" method="POST">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" name="username" required autofocus>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" name="password" required>
-                </div>
-                <button type="submit">Log In</button>
-            </form>
-
-            <a class="records-link" href="/">← Back to Prediction Form</a>
-        </div>
+  <form action="/login" method="POST" class="space-y-5">
+    <div class="flex flex-col gap-2">
+      <label class="field-label">Username</label>
+      <input class="field-input" type="text" name="username" required autofocus>
     </div>
+    <div class="flex flex-col gap-2">
+      <label class="field-label">Password</label>
+      <input class="field-input" type="password" name="password" required>
+    </div>
+    <button type="submit" class="w-full bg-[#1A5319] hover:bg-[#003b05] text-white field-label uppercase py-3.5 rounded transition-colors">
+      Log In
+    </button>
+  </form>
+
+  <a href="/" class="block text-center mt-6 text-[#1A5319] hover:text-[#003b05] text-sm font-semibold">← Back to Prediction Form</a>
+</div>
 </body>
 </html>

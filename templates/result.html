@@ -7,10 +7,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
+    </style>
 </head>
 <body>
     <div class="container">
-        <div class="card result-card">
+        <div class="card result-card" style="opacity:0; animation: fadeInUp 0.6s ease-out forwards;">
             <div class="brand-row" style="justify-content:center;">
                 <img src="/static/logo.svg" alt="Logo" width="36" height="36">
                 <span class="brand-name">CREDORA</span>
@@ -27,7 +31,7 @@
             <h2>{{ applicant_name }}</h2>
 
             {% if flags %}
-            <div style="background:#FBEAE2; border:1px solid #A5401F; border-radius:4px; padding:14px 16px; margin:18px 0; text-align:left;">
+            <div class="fade-in" style="animation-delay:.1s; background:#FBEAE2; border:1px solid #A5401F; border-radius:4px; padding:14px 16px; margin:18px 0; text-align:left;">
                 <p style="font-weight:700; color:#A5401F; font-size:13px; margin-bottom:6px;">⚠️ FLAGGED FOR REVIEW</p>
                 <ul style="margin:0; padding-left:18px; font-size:13px; color:#6B7A75;">
                     {% for flag in flags %}
@@ -38,7 +42,7 @@
             {% endif %}
 
             {% if rejection_reasons %}
-            <div style="background:#F5F0E6; border:1px solid #B08D57; border-radius:4px; padding:14px 16px; margin:18px 0; text-align:left;">
+            <div class="fade-in" style="animation-delay:.15s; background:#F5F0E6; border:1px solid #B08D57; border-radius:4px; padding:14px 16px; margin:18px 0; text-align:left;">
                 <p style="font-weight:700; color:#8A6D3F; font-size:13px; margin-bottom:6px;">📋 BAKIT NA-REJECT</p>
                 <ul style="margin:0; padding-left:18px; font-size:13px; color:#6B7A75;">
                     {% for reason in rejection_reasons %}
@@ -49,7 +53,7 @@
             {% endif %}
 
             {% if improvement_suggestions %}
-            <div style="background:#E4F0EB; border:1px solid #1F6F5C; border-radius:4px; padding:14px 16px; margin:18px 0; text-align:left;">
+            <div class="fade-in" style="animation-delay:.2s; background:#E4F0EB; border:1px solid #1F6F5C; border-radius:4px; padding:14px 16px; margin:18px 0; text-align:left;">
                 <p style="font-weight:700; color:#164F42; font-size:13px; margin-bottom:6px;">💡 PAANO MAPAPAGANDA</p>
                 <ul style="margin:0; padding-left:18px; font-size:13px; color:#6B7A75;">
                     {% for suggestion in improvement_suggestions %}
@@ -59,7 +63,7 @@
             </div>
             {% endif %}
 
-            <div class="progress-ring-wrap">
+            <div class="progress-ring-wrap fade-in" style="animation-delay:.25s;">
                 <svg width="140" height="140" viewBox="0 0 140 140">
                     <circle cx="70" cy="70" r="60" fill="none" stroke="#E7E1D3" stroke-width="10"/>
                     <circle id="progressCircle" cx="70" cy="70" r="60" fill="none"
@@ -91,7 +95,7 @@
             </div>
             {% endif %}
 
-            <div class="section-title">Model Consensus</div>
+            <div class="section-title fade-in" style="animation-delay:.3s;">Model Consensus</div>
             <div style="margin-bottom:20px;">
                 {% for vote in model_votes %}
                 <div class="detail-row">
@@ -108,7 +112,7 @@
                 <p style="font-size:12px; font-weight:600; color:#8A6D3F; margin-top:10px; text-align:center;">{{ model_agreement }}</p>
             </div>
 
-            <div class="section-title">What-If Simulator</div>
+            <div class="section-title fade-in" style="animation-delay:.35s;">What-If Simulator</div>
             <p style="font-size:12px; color:#6B7A75; margin-bottom:16px;">I-adjust ang mga sliders para makita kung paano magbabago ang desisyon.</p>
 
             <div class="form-group">

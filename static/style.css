@@ -249,3 +249,27 @@ tbody tr:hover { background: var(--emerald-bg); }
 
 .tag.approved { background: var(--emerald-bg); color: var(--emerald-dark); }
 .tag.rejected { background: var(--brick-bg); color: var(--brick); }
+
+/* ----- Mobile responsiveness ----- */
+@media (max-width: 480px) {
+    .card {
+        padding: 28px 20px;
+    }
+    h1 {
+        font-size: 24px;
+    }
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    table {
+        font-size: 12px;
+    }
+    th, td {
+        padding: 8px 10px;
+    }
+    .result-badge {
+        width: 100px;
+        height: 100px;
+        font-size: 12px;
+    }

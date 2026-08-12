@@ -1,50 +1,70 @@
-=<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Model Insights</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Feature Importance - CREDORA</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&family=JetBrains+Mono:wght@500&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+  body { font-family: 'Hanken Grotesk', sans-serif; background:#FCF8F3; color:#1e1b18; }
+  .field-label { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #605e5b; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { opacity: 0; animation: fadeInUp 0.55s ease-out forwards; }
+</style>
 </head>
-<body>
-    <div class="container wide">
-        <div class="card">
-            <h1>Feature Importance</h1>
-            <p class="subtitle">Which financial factors influence the model's approval decisions the most</p>
+<body class="min-h-screen">
+<div class="max-w-[820px] mx-auto px-4 md:px-6 py-10">
 
-            <a class="records-link" href="/records">← Back to Records</a>
-            <a class="records-link" href="/logout">Log Out</a>
+  <div class="flex items-center gap-2 mb-2 fade-in">
+    <span class="material-symbols-outlined text-[#1A5319] text-2xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+    <span class="field-label">CREDORA</span>
+  </div>
+  <h1 class="font-semibold mb-1 fade-in" style="font-family:'Source Serif 4', serif; font-size:32px; color:#1A5319; animation-delay:.05s;">Feature Importance</h1>
+  <p class="text-[#605e5b] mb-6 fade-in" style="animation-delay:.08s;">Which financial factors influence the model's approval decisions the most</p>
 
-            <div style="max-width: 700px; margin: 30px auto;">
-                <canvas id="importanceChart"></canvas>
-            </div>
-        </div>
-    </div>
+  <div class="flex flex-wrap gap-4 mb-8 fade-in" style="animation-delay:.1s;">
+    <a href="/records" class="text-[#1A5319] hover:text-[#003b05] font-semibold text-sm inline-flex items-center gap-1">
+      <span class="material-symbols-outlined text-base">arrow_back</span> Records
+    </a>
+    <a href="/logout" class="text-[#605e5b] hover:text-[#1A5319] font-semibold text-sm inline-flex items-center gap-1 ml-auto">
+      Log Out
+    </a>
+  </div>
 
-    <script>
-        const labels = {{ feature_importance | map(attribute='feature') | list | tojson }};
-        const values = {{ feature_importance | map(attribute='importance') | list | tojson }};
+  <div class="bg-white border border-[#E2E8F0] rounded-lg p-6 md:p-8 fade-in" style="animation-delay:.15s;">
+    <canvas id="importanceChart"></canvas>
+  </div>
+</div>
 
-        new Chart(document.getElementById('importanceChart'), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Importance Score',
-                    data: values,
-                    backgroundColor: '#2563eb',
-                    borderRadius: 6,
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { beginAtZero: true }
-                }
+<script>
+    const labels = {{ feature_importance | map(attribute='feature') | list | tojson }};
+    const values = {{ feature_importance | map(attribute='importance') | list | tojson }};
+
+    new Chart(document.getElementById('importanceChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Importance Score',
+                data: values,
+                backgroundColor: '#1A5319',
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            animation: { duration: 900, easing: 'easeOutCubic' },
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, grid: { color: '#E2E8F0' } },
+                y: { grid: { display: false } }
             }
-        });
-    </script>
+        }
+    });
+</script>
 </body>
 </html>
