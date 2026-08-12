@@ -253,11 +253,57 @@
     "BARMM": "BARMM (Bangsamoro)"
   };
 
+  const phCities = {
+    "Metro Manila": ["Manila", "Quezon City", "Makati", "Taguig", "Pasig", "Mandaluyong", "Pasay", "Parañaque", "Caloocan", "Las Piñas", "Muntinlupa", "Marikina", "Valenzuela", "Malabon", "Navotas", "San Juan", "Pateros"],
+    "Pampanga": ["Angeles City", "San Fernando", "Mabalacat", "Apalit", "Guagua", "Mexico"],
+    "Bulacan": ["Malolos", "Meycauayan", "San Jose del Monte", "Baliwag", "Marilao", "Sta. Maria"],
+    "Cavite": ["Bacoor", "Dasmariñas", "Imus", "Tagaytay", "General Trias", "Trece Martires"],
+    "Laguna": ["Calamba", "Santa Rosa", "San Pablo", "Biñan", "Cabuyao", "Los Baños"],
+    "Batangas": ["Batangas City", "Lipa", "Tanauan", "Sto. Tomas", "Nasugbu"],
+    "Rizal": ["Antipolo", "Cainta", "Taytay", "Angono", "Binangonan"],
+    "Quezon": ["Lucena", "Tayabas", "Sariaya", "Candelaria"],
+    "Nueva Ecija": ["Cabanatuan", "Gapan", "Palayan", "San Jose"],
+    "Tarlac": ["Tarlac City", "Concepcion", "Paniqui"],
+    "Bataan": ["Balanga", "Mariveles", "Orani"],
+    "Zambales": ["Olongapo", "Iba", "Subic"],
+    "Cebu": ["Cebu City", "Mandaue", "Lapu-Lapu", "Talisay", "Toledo", "Danao"],
+    "Bohol": ["Tagbilaran", "Panglao", "Ubay"],
+    "Negros Oriental": ["Dumaguete", "Bais", "Bayawan"],
+    "Iloilo": ["Iloilo City", "Passi"],
+    "Negros Occidental": ["Bacolod", "Bago", "Silay", "Talisay"],
+    "Aklan": ["Kalibo", "Boracay/Malay"],
+    "Capiz": ["Roxas City"],
+    "Antique": ["San Jose de Buenavista"],
+    "Davao del Sur": ["Davao City", "Digos"],
+    "Davao del Norte": ["Tagum", "Panabo"],
+    "South Cotabato": ["General Santos", "Koronadal"],
+    "Misamis Oriental": ["Cagayan de Oro", "El Salvador"],
+    "Bukidnon": ["Malaybalay", "Valencia"],
+    "Zamboanga del Sur": ["Zamboanga City", "Pagadian"],
+    "Lanao del Norte": ["Iligan"],
+    "Agusan del Norte": ["Butuan"],
+    "Surigao del Norte": ["Surigao City"],
+    "Leyte": ["Tacloban", "Ormoc"],
+    "Samar": ["Catbalogan"],
+    "Albay": ["Legazpi", "Tabaco", "Ligao"],
+    "Camarines Sur": ["Naga", "Iriga"],
+    "Sorsogon": ["Sorsogon City"],
+    "Pangasinan": ["Dagupan", "Urdaneta", "San Carlos"],
+    "La Union": ["San Fernando"],
+    "Ilocos Norte": ["Laoag"],
+    "Ilocos Sur": ["Vigan", "Candon"],
+    "Cagayan": ["Tuguegarao"],
+    "Isabela": ["Ilagan", "Santiago"],
+    "Benguet": ["Baguio City", "La Trinidad"],
+    "Palawan": ["Puerto Princesa"],
+    "Oriental Mindoro": ["Calapan"],
+    "Marinduque": ["Boac"]
+  };
+
   const regionSelect = document.getElementById("regionSelect");
   const provinceSelect = document.getElementById("provinceSelect");
-
-  
-  
+  const cityInput = document.getElementById("cityInput");
+  const cityList = document.getElementById("cityList");
 
   Object.keys(phRegions).forEach(function (regionKey) {
     const opt = document.createElement("option");
@@ -265,7 +311,8 @@
     opt.textContent = regionLabels[regionKey];
     regionSelect.appendChild(opt);
   });
-   regionSelect.addEventListener("change", function () {
+
+  regionSelect.addEventListener("change", function () {
     const selectedRegion = this.value;
     provinceSelect.innerHTML = "";
     cityList.innerHTML = "";
@@ -317,27 +364,6 @@
     }
   });
 
-    if (!selectedRegion) {
-      provinceSelect.disabled = true;
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = "-- Piliin muna ang Rehiyon --";
-      provinceSelect.appendChild(opt);
-      return;
-    }
-
-    provinceSelect.disabled = false;
-    const placeholderOpt = document.createElement("option");
-    placeholderOpt.value = "";
-    placeholderOpt.textContent = "-- Piliin ang Probinsya --";
-    provinceSelect.appendChild(placeholderOpt);
-
-    phRegions[selectedRegion].forEach(function (province) {
-      const opt = document.createElement("option");
-      opt.value = province;
-      opt.textContent = province;
-      provinceSelect.appendChild(opt);
-    });
   // ----- Auto-format money inputs with commas -----
   document.querySelectorAll(".money-input").forEach(function (input) {
     input.addEventListener("input", function () {
