@@ -48,6 +48,7 @@
     color: #1e1b18; transition: border-color .15s, box-shadow .15s; outline: none;
   }
   .field-input:focus { border-color: #1A5319; box-shadow: 0 0 0 1px #1A5319; }
+  .field-input:disabled { background: #f1f1ef; color: #999; cursor: not-allowed; }
   .field-label { font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; font-weight: 600;
     letter-spacing: 0.05em; text-transform: uppercase; color: #605e5b; }
 </style>
@@ -84,30 +85,15 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-gutter gap-y-stack-md">
       <div class="flex flex-col gap-stack-sm">
         <label class="field-label">Region</label>
-        <select class="field-input appearance-none" name="region" required>
+        <select class="field-input appearance-none" name="region" id="regionSelect" required>
           <option value="">-- Piliin ang Rehiyon --</option>
-          <option value="NCR">NCR (National Capital Region)</option>
-          <option value="CAR">CAR (Cordillera Administrative Region)</option>
-          <option value="Region I">Region I (Ilocos Region)</option>
-          <option value="Region II">Region II (Cagayan Valley)</option>
-          <option value="Region III">Region III (Central Luzon)</option>
-          <option value="Region IV-A">Region IV-A (CALABARZON)</option>
-          <option value="MIMAROPA">MIMAROPA</option>
-          <option value="Region V">Region V (Bicol Region)</option>
-          <option value="Region VI">Region VI (Western Visayas)</option>
-          <option value="Region VII">Region VII (Central Visayas)</option>
-          <option value="Region VIII">Region VIII (Eastern Visayas)</option>
-          <option value="Region IX">Region IX (Zamboanga Peninsula)</option>
-          <option value="Region X">Region X (Northern Mindanao)</option>
-          <option value="Region XI">Region XI (Davao Region)</option>
-          <option value="Region XII">Region XII (SOCCSKSARGEN)</option>
-          <option value="Region XIII">Region XIII (Caraga)</option>
-          <option value="BARMM">BARMM (Bangsamoro)</option>
         </select>
       </div>
       <div class="flex flex-col gap-stack-sm">
         <label class="field-label">Province</label>
-        <input class="field-input" name="province" placeholder="e.g. Metro Manila" type="text" required/>
+        <select class="field-input appearance-none" name="province" id="provinceSelect" required disabled>
+          <option value="">-- Piliin muna ang Rehiyon --</option>
+        </select>
       </div>
       <div class="flex flex-col gap-stack-sm md:col-span-2">
         <label class="field-label">City / Municipality</label>
@@ -225,6 +211,85 @@
 </div>
 
 <script>
+  // ----- Philippine Regions and Provinces -----
+  const phRegions = {
+    "NCR": ["Metro Manila"],
+    "CAR": ["Abra", "Apayao", "Benguet", "Ifugao", "Kalinga", "Mountain Province"],
+    "Region I": ["Ilocos Norte", "Ilocos Sur", "La Union", "Pangasinan"],
+    "Region II": ["Batanes", "Cagayan", "Isabela", "Nueva Vizcaya", "Quirino"],
+    "Region III": ["Aurora", "Bataan", "Bulacan", "Nueva Ecija", "Pampanga", "Tarlac", "Zambales"],
+    "Region IV-A": ["Batangas", "Cavite", "Laguna", "Quezon", "Rizal"],
+    "MIMAROPA": ["Marinduque", "Occidental Mindoro", "Oriental Mindoro", "Palawan", "Romblon"],
+    "Region V": ["Albay", "Camarines Norte", "Camarines Sur", "Catanduanes", "Masbate", "Sorsogon"],
+    "Region VI": ["Aklan", "Antique", "Capiz", "Guimaras", "Iloilo", "Negros Occidental"],
+    "Region VII": ["Bohol", "Cebu", "Negros Oriental", "Siquijor"],
+    "Region VIII": ["Biliran", "Eastern Samar", "Leyte", "Northern Samar", "Samar", "Southern Leyte"],
+    "Region IX": ["Zamboanga del Norte", "Zamboanga del Sur", "Zamboanga Sibugay"],
+    "Region X": ["Bukidnon", "Camiguin", "Lanao del Norte", "Misamis Occidental", "Misamis Oriental"],
+    "Region XI": ["Davao de Oro", "Davao del Norte", "Davao del Sur", "Davao Occidental", "Davao Oriental"],
+    "Region XII": ["Cotabato", "Sarangani", "South Cotabato", "Sultan Kudarat"],
+    "Region XIII": ["Agusan del Norte", "Agusan del Sur", "Dinagat Islands", "Surigao del Norte", "Surigao del Sur"],
+    "BARMM": ["Basilan", "Lanao del Sur", "Maguindanao del Norte", "Maguindanao del Sur", "Sulu", "Tawi-Tawi"]
+  };
+
+  const regionLabels = {
+    "NCR": "NCR (National Capital Region)",
+    "CAR": "CAR (Cordillera Administrative Region)",
+    "Region I": "Region I (Ilocos Region)",
+    "Region II": "Region II (Cagayan Valley)",
+    "Region III": "Region III (Central Luzon)",
+    "Region IV-A": "Region IV-A (CALABARZON)",
+    "MIMAROPA": "MIMAROPA",
+    "Region V": "Region V (Bicol Region)",
+    "Region VI": "Region VI (Western Visayas)",
+    "Region VII": "Region VII (Central Visayas)",
+    "Region VIII": "Region VIII (Eastern Visayas)",
+    "Region IX": "Region IX (Zamboanga Peninsula)",
+    "Region X": "Region X (Northern Mindanao)",
+    "Region XI": "Region XI (Davao Region)",
+    "Region XII": "Region XII (SOCCSKSARGEN)",
+    "Region XIII": "Region XIII (Caraga)",
+    "BARMM": "BARMM (Bangsamoro)"
+  };
+
+  const regionSelect = document.getElementById("regionSelect");
+  const provinceSelect = document.getElementById("provinceSelect");
+
+  Object.keys(phRegions).forEach(function (regionKey) {
+    const opt = document.createElement("option");
+    opt.value = regionKey;
+    opt.textContent = regionLabels[regionKey];
+    regionSelect.appendChild(opt);
+  });
+
+  regionSelect.addEventListener("change", function () {
+    const selectedRegion = this.value;
+    provinceSelect.innerHTML = "";
+
+    if (!selectedRegion) {
+      provinceSelect.disabled = true;
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "-- Piliin muna ang Rehiyon --";
+      provinceSelect.appendChild(opt);
+      return;
+    }
+
+    provinceSelect.disabled = false;
+    const placeholderOpt = document.createElement("option");
+    placeholderOpt.value = "";
+    placeholderOpt.textContent = "-- Piliin ang Probinsya --";
+    provinceSelect.appendChild(placeholderOpt);
+
+    phRegions[selectedRegion].forEach(function (province) {
+      const opt = document.createElement("option");
+      opt.value = province;
+      opt.textContent = province;
+      provinceSelect.appendChild(opt);
+    });
+  });
+
+  // ----- Auto-format money inputs with commas -----
   document.querySelectorAll(".money-input").forEach(function (input) {
     input.addEventListener("input", function () {
       let raw = input.value.replace(/,/g, "").replace(/[^0-9]/g, "");
