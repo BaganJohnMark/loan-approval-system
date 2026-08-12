@@ -80,6 +80,23 @@
             </div>
             {% endif %}
 
+            <div class="section-title">Model Consensus</div>
+            <div style="margin-bottom:20px;">
+                {% for vote in model_votes %}
+                <div class="detail-row">
+                    <span>{{ vote.model }}</span>
+                    <strong>
+                        {% if vote.prediction == "Approved" %}
+                            <span class="tag approved">Approved ({{ vote.probability }}%)</span>
+                        {% else %}
+                            <span class="tag rejected">Rejected ({{ vote.probability }}%)</span>
+                        {% endif %}
+                    </strong>
+                </div>
+                {% endfor %}
+                <p style="font-size:12px; font-weight:600; color:#8A6D3F; margin-top:10px; text-align:center;">{{ model_agreement }}</p>
+            </div>
+
             <div class="section-title">What-If Simulator</div>
             <p style="font-size:12px; color:#6B7A75; margin-bottom:16px;">I-adjust ang mga sliders para makita kung paano magbabago ang desisyon.</p>
 

@@ -48,7 +48,7 @@ def migrate_db():
             cursor.execute(f"ALTER TABLE applications ADD COLUMN {col_name} {col_def}")
             conn.commit()
         except sqlite3.OperationalError:
-            pass  # column already exists, ignore
+            pass
     conn.close()
 
 

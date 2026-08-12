@@ -15,7 +15,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin123"
+ADMIN_PASSWORD = "adminkami"
 
 
 def login_required(f):
@@ -316,7 +316,21 @@ def logout():
 @login_required
 def records():
     applications = get_all_applications()
-    return render_template("records.html", applications=applications)
+
+    total_applications = len(applications)
+    approved_count = sum(1 for a in applications if a["prediction"] == "Approved")
+    approval_rate = round((approved_count / total_applications) * 100, 1) if total_applications else 0
+    avg_cibil = round(sum(a["cibil_score"] for a in applications) / total_applications) if total_applications else 0
+    flagged_count = sum(1 for a in applications if a["flags"])
+
+    return render_template(
+        "records.html",
+        applications=applications,
+        total_applications=total_applications,
+        approval_rate=approval_rate,
+        avg_cibil=avg_cibil,
+        flagged_count=flagged_count,
+    )
 
 
 @app.route("/verify/<int:app_id>", methods=["POST"])

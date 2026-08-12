@@ -1,94 +1,132 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Applicant Records</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Analytics Dashboard - CREDORA</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&family=JetBrains+Mono:wght@500&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+  body { font-family: 'Hanken Grotesk', sans-serif; background:#FCF8F3; color:#1e1b18; }
+  .font-headline { font-family: 'Source Serif 4', serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .kpi-card { background:#fff; border:1px solid #E2E8F0; border-radius:0.5rem; padding:1rem; }
+  .kpi-label { font-size:12px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#605e5b; }
+  .kpi-value { font-family:'Source Serif 4', serif; font-size:32px; font-weight:700; color:#1A5319; }
+  table { font-family:'Hanken Grotesk', sans-serif; }
+  td, th { font-size: 13px; }
+  td { font-family:'JetBrains Mono', monospace; }
+  th { font-family:'Hanken Grotesk', sans-serif; }
+</style>
 </head>
-<body>
-    <div class="container wide">
-        <div class="card">
-            <div class="brand-row">
-                <img src="/static/logo.svg" alt="Logo" width="36" height="36">
-                <span class="brand-name">CREDORA</span>
-            </div>
-            <h1>Applicant Records</h1>
-            <a class="records-link" href="/">← Back to Prediction Form</a>
-            <a class="records-link" href="/logout">Log Out</a>
-            <a class="records-link" href="/insights">View Feature Importance →</a>
+<body class="min-h-screen">
+<div class="max-w-[1120px] mx-auto px-4 md:px-6 py-10">
 
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Location</th>
-                            <th>ID Type / Number</th>
-                            <th>ID Photo</th>
-                            <th>Verified</th>
-                            <th>Income</th>
-                            <th>Loan Amount</th>
-                            <th>CIBIL</th>
-                            <th>Prediction</th>
-                            <th>Risk Tier</th>
-                            <th>Flags</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for app in applications %}
-                        <tr>
-                            <td>{{ app["id"] }}</td>
-                            <td>{{ app["applicant_name"] }}</td>
-                            <td>{{ app["city"] }}, {{ app["province"] }}</td>
-                            <td>{{ app["id_type"] }}<br>{{ app["id_number"] }}</td>
-                            <td>
-                                {% if app["id_photo"] %}
-                                    <a href="/static/{{ app['id_photo'] }}" target="_blank">View ID</a>
-                                {% else %}
-                                    —
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if app["verified"] %}
-                                    <span class="tag approved">✓ Verified</span>
-                                {% else %}
-                                    <form action="/verify/{{ app['id'] }}" method="POST" style="margin:0;">
-                                        <button type="submit" style="width:auto; padding:6px 12px; font-size:11px; margin:0;">Mark Verified</button>
-                                    </form>
-                                {% endif %}
-                            </td>
-                            <td>₱{{ "{:,.0f}".format(app["income_annum"]) }}</td>
-                            <td>₱{{ "{:,.0f}".format(app["loan_amount"]) }}</td>
-                            <td>{{ app["cibil_score"] }}</td>
-                            <td>
-                                {% if app["prediction"] == "Approved" %}
-                                    <span class="tag approved">Approved</span>
-                                {% else %}
-                                    <span class="tag rejected">Rejected</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ app["risk_tier"] }}</td>
-                            <td>
-                                {% if app["flags"] %}
-                                    <span class="tag rejected">⚠ Flagged</span>
-                                {% else %}
-                                    —
-                                {% endif %}
-                            </td>
-                            <td>{{ app["created_at"] }}</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="13">No applications yet.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  <div class="flex items-center gap-2 mb-2">
+    <span class="material-symbols-outlined text-[#1A5319] text-2xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+    <span class="kpi-label">CREDORA</span>
+  </div>
+  <h1 class="font-headline text-[32px] font-semibold text-[#1A5319] mb-1">Analytics Dashboard</h1>
+  <p class="text-[#605e5b] mb-6">Overview of all applicant submissions and decisions</p>
+
+  <div class="flex flex-wrap gap-4 mb-8">
+    <a href="/" class="text-[#1A5319] hover:text-[#003b05] font-semibold text-sm inline-flex items-center gap-1">
+      <span class="material-symbols-outlined text-base">arrow_back</span> Prediction Form
+    </a>
+    <a href="/insights" class="text-[#1A5319] hover:text-[#003b05] font-semibold text-sm inline-flex items-center gap-1">
+      Feature Importance <span class="material-symbols-outlined text-base">arrow_forward</span>
+    </a>
+    <a href="/logout" class="text-[#605e5b] hover:text-[#1A5319] font-semibold text-sm inline-flex items-center gap-1 ml-auto">
+      Log Out
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+    <div class="kpi-card">
+      <div class="kpi-label mb-2">Total Applications</div>
+      <div class="kpi-value">{{ total_applications }}</div>
     </div>
+    <div class="kpi-card">
+      <div class="kpi-label mb-2">Approval Rate</div>
+      <div class="kpi-value">{{ approval_rate }}%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label mb-2">Average CIBIL Score</div>
+      <div class="kpi-value">{{ avg_cibil }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label mb-2">Flagged for Review</div>
+      <div class="kpi-value" style="color:#ba1a1a;">{{ flagged_count }}</div>
+    </div>
+  </div>
+
+  <div class="bg-white border border-[#E2E8F0] rounded-lg overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="bg-[#1A5319] text-white">
+            <th class="px-4 py-3 text-left uppercase tracking-wider">ID</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">Name</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">Location</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">ID Type / Number</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">ID Photo</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">Verified</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">Income</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">Loan Amount</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">CIBIL</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">Prediction</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">Risk Tier</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">Flags</th>
+            <th class="px-4 py-3 text-left uppercase tracking-wider">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+          <tr class="border-t border-[#E2E8F0] hover:bg-[#FCF8F3] transition-colors">
+            <td class="px-4 py-3">{{ app["id"] }}</td>
+            <td class="px-4 py-3">{{ app["applicant_name"] }}</td>
+            <td class="px-4 py-3">{{ app["city"] }}, {{ app["province"] }}</td>
+            <td class="px-4 py-3">{{ app["id_type"] }}<br>{{ app["id_number"] }}</td>
+            <td class="px-4 py-3">
+              {% if app["id_photo"] %}
+                <a href="/static/{{ app['id_photo'] }}" target="_blank" class="text-[#1A5319] underline">View ID</a>
+              {% else %} — {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              {% if app["verified"] %}
+                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">✓ Verified</span>
+              {% else %}
+                <form action="/verify/{{ app['id'] }}" method="POST" style="margin:0;">
+                  <button type="submit" class="px-2 py-1 rounded text-xs font-semibold bg-[#e6e2dd] hover:bg-[#1A5319] hover:text-white transition-colors">Mark Verified</button>
+                </form>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">₱{{ "{:,.0f}".format(app["income_annum"]) }}</td>
+            <td class="px-4 py-3">₱{{ "{:,.0f}".format(app["loan_amount"]) }}</td>
+            <td class="px-4 py-3">{{ app["cibil_score"] }}</td>
+            <td class="px-4 py-3">
+              {% if app["prediction"] == "Approved" %}
+                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Approved</span>
+              {% else %}
+                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">Rejected</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">{{ app["risk_tier"] }}</td>
+            <td class="px-4 py-3">
+              {% if app["flags"] %}
+                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">⚠ Flagged</span>
+              {% else %} — {% endif %}
+            </td>
+            <td class="px-4 py-3">{{ app["created_at"] }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="13" class="px-4 py-6 text-center text-[#605e5b]">No applications yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 </body>
 </html>

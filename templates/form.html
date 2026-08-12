@@ -1,209 +1,274 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Loan Approval Prediction System</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>New Loan Application - CREDORA</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&family=JetBrains+Mono:wght@500&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "deep-forest": "#1A5319",
+                    "primary": "#003b05",
+                    "technical-navy": "#1B3C73",
+                    "secondary": "#605e5b",
+                    "on-surface": "#1e1b18",
+                    "surface-ivory": "#FCF8F3",
+                    "surface-container-lowest": "#ffffff",
+                    "border-muted": "#E2E8F0",
+                    "secondary-container": "#e6e2dd",
+                    "error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a"
+                },
+                fontFamily: {
+                    "headline": ["Source Serif 4", "serif"],
+                    "body": ["Hanken Grotesk", "sans-serif"],
+                    "mono": ["JetBrains Mono", "monospace"]
+                },
+                spacing: {
+                    "stack-lg": "48px",
+                    "stack-md": "24px",
+                    "stack-sm": "8px",
+                    "gutter": "24px"
+                }
+            }
+        }
+    };
+</script>
+<style>
+  .field-input {
+    width: 100%; background: #ffffff; border: 1px solid #E2E8F0; border-radius: 0.25rem;
+    padding: 0.75rem 1rem; font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    color: #1e1b18; transition: border-color .15s, box-shadow .15s; outline: none;
+  }
+  .field-input:focus { border-color: #1A5319; box-shadow: 0 0 0 1px #1A5319; }
+  .field-label { font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase; color: #605e5b; }
+</style>
 </head>
-<body>
-    <div class="container">
-        <div class="card">
-            <div class="brand-row">
-                <img src="/static/logo.svg" alt="Logo" width="36" height="36">
-                <span class="brand-name">CREDORA</span>
-            </div>
-            <h1>Loan Approval Prediction</h1>
-            <p class="subtitle">Fill in the applicant's financial profile below</p>
+<body class="bg-surface-ivory min-h-screen flex text-on-surface font-body text-body-md">
+<div class="flex flex-col flex-1 min-w-0 bg-deep-forest justify-center items-center py-12 px-4">
+<div class="bg-surface-ivory rounded-lg shadow-sm border border-border-muted max-w-[720px] w-full p-8 md:p-12 relative flex flex-col mx-auto">
 
-            <form action="/predict" method="POST" enctype="multipart/form-data"></form>
-                <div class="form-group">
-                    <label>Applicant Name</label>
-                    <input type="text" name="applicant_name" required>
-                </div>
-                <h3 class="section-title">Address</h3>
+<div class="flex items-center gap-2 mb-2">
+  <span class="material-symbols-outlined text-deep-forest text-2xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+  <span class="field-label text-secondary">CREDORA</span>
+</div>
+<h1 class="font-headline text-[32px] font-semibold text-deep-forest mb-1">Loan Approval Prediction</h1>
+<p class="text-secondary text-body-md mb-8">Fill in the applicant's financial profile below</p>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Region</label>
-                        <input type="text" name="region" placeholder="e.g. NCR" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Province</label>
-                        <input type="text" name="province" placeholder="e.g. Metro Manila" required>
-                    </div>
-                </div>
+<form action="/predict" method="POST" enctype="multipart/form-data" id="loanForm" class="space-y-stack-lg">
 
-                <div class="form-group">
-                    <label>City / Municipality</label>
-                    <input type="text" name="city" placeholder="e.g. Quezon City" required>
-                </div>
-
-                <h3 class="section-title">Identity Verification</h3>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Valid ID Type</label>
-                        <select name="id_type" required>
-                            <option value="Philippine National ID">Philippine National ID</option>
-                            <option value="Driver's License">Driver's License</option>
-                            <option value="Passport">Passport</option>
-                            <option value="UMID">UMID</option>
-                            <option value="SSS ID">SSS ID</option>
-                            <option value="Postal ID">Postal ID</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>ID Number</label>
-                        <input type="text" name="id_number" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Upload Photo of Valid ID</label>
-                    <input type="file" name="id_photo" accept=".jpg,.jpeg,.png,.pdf" required>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Number of Dependents</label>
-                        <input type="number" name="no_of_dependents" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Education</label>
-                        <select name="education" required>
-                            <option value="Graduate">Graduate</option>
-                            <option value="Not Graduate">Not Graduate</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Self Employed</label>
-                        <select name="self_employed" required>
-                            <option value="No">No</option>
-                            <option value="Yes">Yes</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>CIBIL / Credit Score</label>
-                        <input type="number" name="cibil_score" min="300" max="900" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Annual Income (₱)</label>
-                        <input type="text" inputmode="numeric" class="money-input" name="income_annum" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Loan Amount Requested (₱)</label>
-                        <input type="text" inputmode="numeric" class="money-input" name="loan_amount" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Loan Term (years)</label>
-                    <input type="number" name="loan_term" min="1" required>
-                </div>
-
-                <h3 class="section-title">Asset Values (₱)</h3>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Residential Assets</label>
-                        <input type="text" inputmode="numeric" class="money-input" name="residential_assets_value" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Commercial Assets</label>
-                        <input type="text" inputmode="numeric" class="money-input" name="commercial_assets_value" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Luxury Assets</label>
-                        <input type="text" inputmode="numeric" class="money-input" name="luxury_assets_value" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Bank Assets</label>
-                        <input type="text" inputmode="numeric" class="money-input" name="bank_asset_value" required>
-                    </div>
-                </div>
-
-                <button type="submit" id="submitBtn">Predict Loan Approval</button>
-            </form>
-
-            <a class="records-link" href="/records">View All Applicant Records →</a>
-
-            <script>
-                // ----- Auto-format money inputs with commas -----
-                document.querySelectorAll(".money-input").forEach(function (input) {
-                    input.addEventListener("input", function () {
-                        let raw = input.value.replace(/,/g, "").replace(/[^0-9]/g, "");
-                        input.value = raw ? Number(raw).toLocaleString("en-US") : "";
-                    });
-                });
-
-                function rawNumber(name) {
-                    const val = document.querySelector(`[name="${name}"]`).value;
-                    return Number(val.replace(/,/g, "")) || 0;
-                }
-
-                // ----- Check for suspicious/inconsistent data before submitting -----
-                function checkSuspiciousData() {
-                    const income = rawNumber("income_annum");
-                    const loan = rawNumber("loan_amount");
-                    const dependents = Number(document.querySelector('[name="no_of_dependents"]').value) || 0;
-                    const totalAssets =
-                        rawNumber("residential_assets_value") +
-                        rawNumber("commercial_assets_value") +
-                        rawNumber("luxury_assets_value") +
-                        rawNumber("bank_asset_value");
-
-                    const warnings = [];
-                    if (income > 0 && loan > income * 10) {
-                        warnings.push("Ang hiniling na loan amount ay higit 10x ng annual income.");
-                    }
-                    if (income > 0 && totalAssets > income * 30) {
-                        warnings.push("Ang kabuuang asset value ay hindi pangkaraniwang mataas kumpara sa income.");
-                    }
-                    if (income > 0 && totalAssets < income * 0.05) {
-                        warnings.push("Napakababa ng asset value kumpara sa income — posibleng kulang o maling datos.");
-                    }
-                    if (dependents > 10) {
-                        warnings.push("Hindi pangkaraniwang bilang ng dependents.");
-                    }
-                    return warnings;
-                }
-
-                document.querySelector("form").addEventListener("submit", function (e) {
-                    const warnings = checkSuspiciousData();
-                    if (warnings.length > 0) {
-                        const message =
-                            "⚠️ May napansin kaming hindi pangkaraniwang datos:\n\n" +
-                            warnings.map(w => "• " + w).join("\n") +
-                            "\n\nSigurado ka bang ipagpatuloy?";
-                        if (!confirm(message)) {
-                            e.preventDefault();
-                            return;
-                        }
-                    }
-
-                    // Strip commas from money fields before submitting to server
-                    document.querySelectorAll(".money-input").forEach(function (input) {
-                        input.value = input.value.replace(/,/g, "");
-                    });
-
-                    const btn = document.getElementById("submitBtn");
-                    btn.disabled = true;
-                    btn.textContent = "Analyzing Profile...";
-                });
-            </script>
-        </div>
+  <section>
+    <div class="flex items-center gap-4 mb-6">
+      <h2 class="font-headline text-[24px] font-semibold text-on-surface whitespace-nowrap">Applicant Details</h2>
+      <div class="h-px bg-border-muted flex-grow"></div>
     </div>
+    <div class="flex flex-col gap-stack-sm">
+      <label class="field-label">Applicant Name</label>
+      <input class="field-input" name="applicant_name" placeholder="Full Name" type="text" required/>
+    </div>
+  </section>
+
+  <section>
+    <div class="flex items-center gap-4 mb-6">
+      <h2 class="font-headline text-[24px] font-semibold text-on-surface whitespace-nowrap">Address</h2>
+      <div class="h-px bg-border-muted flex-grow"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-gutter gap-y-stack-md">
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Region</label>
+        <select class="field-input appearance-none" name="region" required>
+          <option value="">-- Piliin ang Rehiyon --</option>
+          <option value="NCR">NCR (National Capital Region)</option>
+          <option value="CAR">CAR (Cordillera Administrative Region)</option>
+          <option value="Region I">Region I (Ilocos Region)</option>
+          <option value="Region II">Region II (Cagayan Valley)</option>
+          <option value="Region III">Region III (Central Luzon)</option>
+          <option value="Region IV-A">Region IV-A (CALABARZON)</option>
+          <option value="MIMAROPA">MIMAROPA</option>
+          <option value="Region V">Region V (Bicol Region)</option>
+          <option value="Region VI">Region VI (Western Visayas)</option>
+          <option value="Region VII">Region VII (Central Visayas)</option>
+          <option value="Region VIII">Region VIII (Eastern Visayas)</option>
+          <option value="Region IX">Region IX (Zamboanga Peninsula)</option>
+          <option value="Region X">Region X (Northern Mindanao)</option>
+          <option value="Region XI">Region XI (Davao Region)</option>
+          <option value="Region XII">Region XII (SOCCSKSARGEN)</option>
+          <option value="Region XIII">Region XIII (Caraga)</option>
+          <option value="BARMM">BARMM (Bangsamoro)</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Province</label>
+        <input class="field-input" name="province" placeholder="e.g. Metro Manila" type="text" required/>
+      </div>
+      <div class="flex flex-col gap-stack-sm md:col-span-2">
+        <label class="field-label">City / Municipality</label>
+        <input class="field-input" name="city" placeholder="e.g. Quezon City" type="text" required/>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="flex items-center gap-4 mb-6">
+      <h2 class="font-headline text-[24px] font-semibold text-on-surface whitespace-nowrap">Identity Verification</h2>
+      <div class="h-px bg-border-muted flex-grow"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-gutter gap-y-stack-md">
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Valid ID Type</label>
+        <select class="field-input appearance-none" name="id_type" required>
+          <option value="Philippine National ID">Philippine National ID</option>
+          <option value="Passport">Passport</option>
+          <option value="Driver's License">Driver's License</option>
+          <option value="UMID">UMID</option>
+          <option value="SSS ID">SSS ID</option>
+          <option value="Postal ID">Postal ID</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">ID Number</label>
+        <input class="field-input" name="id_number" type="text" required/>
+      </div>
+      <div class="flex flex-col gap-stack-sm md:col-span-2">
+        <label class="field-label">Upload Photo of Valid ID</label>
+        <label class="border border-dashed border-border-muted bg-surface-container-lowest rounded p-4 flex items-center gap-4 hover:border-deep-forest transition-colors cursor-pointer group">
+          <span class="bg-secondary-container px-4 py-2 rounded field-label text-on-surface group-hover:bg-deep-forest group-hover:text-white transition-colors">Choose File</span>
+          <span id="fileNameLabel" class="text-secondary text-[14px] font-mono">No file chosen</span>
+          <input type="file" name="id_photo" accept=".jpg,.jpeg,.png,.pdf" class="hidden" required onchange="document.getElementById('fileNameLabel').textContent = this.files[0] ? this.files[0].name : 'No file chosen'"/>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-gutter gap-y-stack-md">
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Number of Dependents</label>
+        <input class="field-input" name="no_of_dependents" type="number" min="0" required/>
+      </div>
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Education</label>
+        <select class="field-input appearance-none" name="education" required>
+          <option value="Graduate">Graduate</option>
+          <option value="Not Graduate">Not Graduate</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Self Employed</label>
+        <select class="field-input appearance-none" name="self_employed" required>
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">CIBIL / Credit Score</label>
+        <input class="field-input" name="cibil_score" type="number" min="300" max="900" required/>
+      </div>
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Annual Income (₱)</label>
+        <input class="field-input money-input" name="income_annum" type="text" inputmode="numeric" required/>
+      </div>
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Loan Amount Requested (₱)</label>
+        <input class="field-input money-input" name="loan_amount" type="text" inputmode="numeric" required/>
+      </div>
+      <div class="flex flex-col gap-stack-sm md:col-span-2">
+        <label class="field-label">Loan Term (Years)</label>
+        <input class="field-input" name="loan_term" type="number" min="1" required/>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="flex items-center gap-4 mb-6">
+      <h2 class="font-headline text-[24px] font-semibold text-on-surface whitespace-nowrap">Asset Values (₱)</h2>
+      <div class="h-px bg-border-muted flex-grow"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-gutter gap-y-stack-md">
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Residential Assets</label>
+        <input class="field-input money-input" name="residential_assets_value" type="text" inputmode="numeric" required/>
+      </div>
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Commercial Assets</label>
+        <input class="field-input money-input" name="commercial_assets_value" type="text" inputmode="numeric" required/>
+      </div>
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Luxury Assets</label>
+        <input class="field-input money-input" name="luxury_assets_value" type="text" inputmode="numeric" required/>
+      </div>
+      <div class="flex flex-col gap-stack-sm">
+        <label class="field-label">Bank Assets</label>
+        <input class="field-input money-input" name="bank_asset_value" type="text" inputmode="numeric" required/>
+      </div>
+    </div>
+  </section>
+
+  <div class="pt-6">
+    <button id="submitBtn" class="w-full bg-deep-forest hover:bg-primary text-white field-label uppercase py-4 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-technical-navy" type="submit">
+      Predict Loan Approval
+    </button>
+    <a class="inline-flex items-center gap-1 mt-6 text-deep-forest hover:text-primary transition-colors field-label" href="/records">
+      View All Applicant Records <span class="material-symbols-outlined text-sm">arrow_forward</span>
+    </a>
+  </div>
+</form>
+</div>
+</div>
+
+<script>
+  document.querySelectorAll(".money-input").forEach(function (input) {
+    input.addEventListener("input", function () {
+      let raw = input.value.replace(/,/g, "").replace(/[^0-9]/g, "");
+      input.value = raw ? Number(raw).toLocaleString("en-US") : "";
+    });
+  });
+
+  function rawNumber(name) {
+    const val = document.querySelector(`[name="${name}"]`).value;
+    return Number(val.replace(/,/g, "")) || 0;
+  }
+
+  function checkSuspiciousData() {
+    const income = rawNumber("income_annum");
+    const loan = rawNumber("loan_amount");
+    const dependents = Number(document.querySelector('[name="no_of_dependents"]').value) || 0;
+    const totalAssets =
+      rawNumber("residential_assets_value") +
+      rawNumber("commercial_assets_value") +
+      rawNumber("luxury_assets_value") +
+      rawNumber("bank_asset_value");
+
+    const warnings = [];
+    if (income > 0 && loan > income * 10) warnings.push("Ang hiniling na loan amount ay higit 10x ng annual income.");
+    if (income > 0 && totalAssets > income * 30) warnings.push("Ang kabuuang asset value ay hindi pangkaraniwang mataas kumpara sa income.");
+    if (income > 0 && totalAssets < income * 0.05) warnings.push("Napakababa ng asset value kumpara sa income — posibleng kulang o maling datos.");
+    if (dependents > 10) warnings.push("Hindi pangkaraniwang bilang ng dependents.");
+    return warnings;
+  }
+
+  document.getElementById("loanForm").addEventListener("submit", function (e) {
+    const warnings = checkSuspiciousData();
+    if (warnings.length > 0) {
+      const message = "⚠️ May napansin kaming hindi pangkaraniwang datos:\n\n" +
+        warnings.map(w => "• " + w).join("\n") + "\n\nSigurado ka bang ipagpatuloy?";
+      if (!confirm(message)) { e.preventDefault(); return; }
+    }
+    document.querySelectorAll(".money-input").forEach(function (input) {
+      input.value = input.value.replace(/,/g, "");
+    });
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.textContent = "Analyzing Profile...";
+  });
+</script>
 </body>
 </html>
