@@ -51,11 +51,50 @@
   .field-input:disabled { background: #f1f1ef; color: #999; cursor: not-allowed; }
   .field-label { font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; font-weight: 600;
     letter-spacing: 0.05em; text-transform: uppercase; color: #605e5b; }
+
+  /* ----- Fade-in animation ----- */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in-section {
+    opacity: 0;
+    animation: fadeInUp 0.55s ease-out forwards;
+  }
+  .fade-in-card {
+    opacity: 0;
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  /* ----- Toast notification (replaces browser confirm) ----- */
+  .toast-overlay {
+    position: fixed; inset: 0; background: rgba(15,42,40,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+  }
+  .toast-overlay.active { opacity: 1; pointer-events: auto; }
+  .toast-box {
+    background: #FCF8F3; border-radius: 8px; max-width: 420px; width: 90%;
+    padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    transform: scale(0.92) translateY(10px); transition: transform 0.25s ease;
+  }
+  .toast-overlay.active .toast-box { transform: scale(1) translateY(0); }
+  .toast-title { font-family:'Source Serif 4', serif; font-weight:700; font-size:18px; color:#A5401F; margin-bottom:10px; }
+  .toast-list { font-size:13px; color:#605e5b; margin:0 0 18px; padding-left:18px; }
+  .toast-buttons { display:flex; gap:10px; }
+  .toast-btn { flex:1; padding:10px; border-radius:4px; font-size:12px; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.04em; cursor:pointer; border:none; transition: opacity .15s; }
+  .toast-btn:hover { opacity:0.85; }
+  .toast-btn-cancel { background:#e6e2dd; color:#1e1b18; }
+  .toast-btn-confirm { background:#1A5319; color:#fff; }
+
+  /* ----- Field focus lift ----- */
+  .field-input:focus { transform: translateY(-1px); }
 </style>
 </head>
 <body class="bg-surface-ivory min-h-screen flex text-on-surface font-body text-body-md">
 <div class="flex flex-col flex-1 min-w-0 bg-deep-forest justify-center items-center py-12 px-4">
-<div class="bg-surface-ivory rounded-lg shadow-sm border border-border-muted max-w-[720px] w-full p-8 md:p-12 relative flex flex-col mx-auto">
+<div class="bg-surface-ivory rounded-lg shadow-sm border border-border-muted max-w-[720px] w-full p-8 md:p-12 relative flex flex-col mx-auto fade-in-card">
 
 <div class="flex items-center gap-2 mb-2">
   <span class="material-symbols-outlined text-deep-forest text-2xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
@@ -66,7 +105,7 @@
 
 <form action="/predict" method="POST" enctype="multipart/form-data" id="loanForm" class="space-y-stack-lg">
 
-  <section>
+  <section class="fade-in-section" style="animation-delay:.05s;">
     <div class="flex items-center gap-4 mb-6">
       <h2 class="font-headline text-[24px] font-semibold text-on-surface whitespace-nowrap">Applicant Details</h2>
       <div class="h-px bg-border-muted flex-grow"></div>
@@ -77,7 +116,7 @@
     </div>
   </section>
 
-  <section>
+  <section class="fade-in-section" style="animation-delay:.1s;">
     <div class="flex items-center gap-4 mb-6">
       <h2 class="font-headline text-[24px] font-semibold text-on-surface whitespace-nowrap">Address</h2>
       <div class="h-px bg-border-muted flex-grow"></div>
@@ -103,7 +142,7 @@
     </div>
   </section>
 
-  <section>
+  <section class="fade-in-section" style="animation-delay:.15s;">
     <div class="flex items-center gap-4 mb-6">
       <h2 class="font-headline text-[24px] font-semibold text-on-surface whitespace-nowrap">Identity Verification</h2>
       <div class="h-px bg-border-muted flex-grow"></div>
@@ -126,16 +165,17 @@
       </div>
       <div class="flex flex-col gap-stack-sm md:col-span-2">
         <label class="field-label">Upload Photo of Valid ID</label>
-        <label class="border border-dashed border-border-muted bg-surface-container-lowest rounded p-4 flex items-center gap-4 hover:border-deep-forest transition-colors cursor-pointer group">
+        <label id="fileDropzone" class="border border-dashed border-border-muted bg-surface-container-lowest rounded p-4 flex items-center gap-4 hover:border-deep-forest transition-colors cursor-pointer group">
           <span class="bg-secondary-container px-4 py-2 rounded field-label text-on-surface group-hover:bg-deep-forest group-hover:text-white transition-colors">Choose File</span>
           <span id="fileNameLabel" class="text-secondary text-[14px] font-mono">No file chosen</span>
-          <input type="file" name="id_photo" accept=".jpg,.jpeg,.png,.pdf" class="hidden" required onchange="document.getElementById('fileNameLabel').textContent = this.files[0] ? this.files[0].name : 'No file chosen'"/>
+          <span id="fileCheckmark" class="material-symbols-outlined text-deep-forest ml-auto" style="display:none; font-variation-settings:'FILL' 1;">check_circle</span>
+          <input type="file" name="id_photo" accept=".jpg,.jpeg,.png,.pdf" class="hidden" required onchange="handleFileChange(this)"/>
         </label>
       </div>
     </div>
   </section>
 
-  <section>
+  <section class="fade-in-section" style="animation-delay:.2s;">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-gutter gap-y-stack-md">
       <div class="flex flex-col gap-stack-sm">
         <label class="field-label">Number of Dependents</label>
@@ -174,7 +214,7 @@
     </div>
   </section>
 
-  <section>
+  <section class="fade-in-section" style="animation-delay:.25s;">
     <div class="flex items-center gap-4 mb-6">
       <h2 class="font-headline text-[24px] font-semibold text-on-surface whitespace-nowrap">Asset Values (₱)</h2>
       <div class="h-px bg-border-muted flex-grow"></div>
@@ -199,7 +239,7 @@
     </div>
   </section>
 
-  <div class="pt-6">
+  <div class="pt-6 fade-in-section" style="animation-delay:.3s;">
     <button id="submitBtn" class="w-full bg-deep-forest hover:bg-primary text-white field-label uppercase py-4 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-technical-navy" type="submit">
       Predict Loan Approval
     </button>
@@ -211,7 +251,32 @@
 </div>
 </div>
 
+<!-- ----- Toast confirmation modal ----- -->
+<div class="toast-overlay" id="toastOverlay">
+  <div class="toast-box">
+    <div class="toast-title">⚠️ May Napansing Hindi Pangkaraniwang Datos</div>
+    <ul class="toast-list" id="toastList"></ul>
+    <p style="font-size:13px; color:#1e1b18; margin-bottom:16px; font-weight:600;">Sigurado ka bang ipagpatuloy?</p>
+    <div class="toast-buttons">
+      <button type="button" class="toast-btn toast-btn-cancel" id="toastCancel">Kanselahin</button>
+      <button type="button" class="toast-btn toast-btn-confirm" id="toastConfirm">Ipagpatuloy</button>
+    </div>
+  </div>
+</div>
+
 <script>
+  function handleFileChange(input) {
+    const label = document.getElementById("fileNameLabel");
+    const check = document.getElementById("fileCheckmark");
+    if (input.files[0]) {
+      label.textContent = input.files[0].name;
+      check.style.display = "inline-block";
+    } else {
+      label.textContent = "No file chosen";
+      check.style.display = "none";
+    }
+  }
+
   // ----- Philippine Regions and Provinces -----
   const phRegions = {
     "NCR": ["Metro Manila"],
@@ -234,22 +299,14 @@
   };
 
   const regionLabels = {
-    "NCR": "NCR (National Capital Region)",
-    "CAR": "CAR (Cordillera Administrative Region)",
-    "Region I": "Region I (Ilocos Region)",
-    "Region II": "Region II (Cagayan Valley)",
-    "Region III": "Region III (Central Luzon)",
-    "Region IV-A": "Region IV-A (CALABARZON)",
-    "MIMAROPA": "MIMAROPA",
-    "Region V": "Region V (Bicol Region)",
-    "Region VI": "Region VI (Western Visayas)",
-    "Region VII": "Region VII (Central Visayas)",
-    "Region VIII": "Region VIII (Eastern Visayas)",
-    "Region IX": "Region IX (Zamboanga Peninsula)",
-    "Region X": "Region X (Northern Mindanao)",
-    "Region XI": "Region XI (Davao Region)",
-    "Region XII": "Region XII (SOCCSKSARGEN)",
-    "Region XIII": "Region XIII (Caraga)",
+    "NCR": "NCR (National Capital Region)", "CAR": "CAR (Cordillera Administrative Region)",
+    "Region I": "Region I (Ilocos Region)", "Region II": "Region II (Cagayan Valley)",
+    "Region III": "Region III (Central Luzon)", "Region IV-A": "Region IV-A (CALABARZON)",
+    "MIMAROPA": "MIMAROPA", "Region V": "Region V (Bicol Region)",
+    "Region VI": "Region VI (Western Visayas)", "Region VII": "Region VII (Central Visayas)",
+    "Region VIII": "Region VIII (Eastern Visayas)", "Region IX": "Region IX (Zamboanga Peninsula)",
+    "Region X": "Region X (Northern Mindanao)", "Region XI": "Region XI (Davao Region)",
+    "Region XII": "Region XII (SOCCSKSARGEN)", "Region XIII": "Region XIII (Caraga)",
     "BARMM": "BARMM (Bangsamoro)"
   };
 
@@ -395,13 +452,48 @@
     return warnings;
   }
 
-  document.getElementById("loanForm").addEventListener("submit", function (e) {
+  // ----- Custom toast confirm (replaces browser confirm()) -----
+  const toastOverlay = document.getElementById("toastOverlay");
+  const toastList = document.getElementById("toastList");
+  const toastCancel = document.getElementById("toastCancel");
+  const toastConfirm = document.getElementById("toastConfirm");
+
+  function showToastConfirm(warnings) {
+    return new Promise(function (resolve) {
+      toastList.innerHTML = warnings.map(w => `<li>${w}</li>`).join("");
+      toastOverlay.classList.add("active");
+
+      function cleanup(result) {
+        toastOverlay.classList.remove("active");
+        toastCancel.removeEventListener("click", onCancel);
+        toastConfirm.removeEventListener("click", onConfirm);
+        resolve(result);
+      }
+      function onCancel() { cleanup(false); }
+      function onConfirm() { cleanup(true); }
+
+      toastCancel.addEventListener("click", onCancel);
+      toastConfirm.addEventListener("click", onConfirm);
+    });
+  }
+
+  document.getElementById("loanForm").addEventListener("submit", async function (e) {
     const warnings = checkSuspiciousData();
     if (warnings.length > 0) {
-      const message = "⚠️ May napansin kaming hindi pangkaraniwang datos:\n\n" +
-        warnings.map(w => "• " + w).join("\n") + "\n\nSigurado ka bang ipagpatuloy?";
-      if (!confirm(message)) { e.preventDefault(); return; }
+      e.preventDefault();
+      const proceed = await showToastConfirm(warnings);
+      if (!proceed) return;
+
+      document.querySelectorAll(".money-input").forEach(function (input) {
+        input.value = input.value.replace(/,/g, "");
+      });
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      btn.textContent = "Analyzing Profile...";
+      this.submit();
+      return;
     }
+
     document.querySelectorAll(".money-input").forEach(function (input) {
       input.value = input.value.replace(/,/g, "");
     });
