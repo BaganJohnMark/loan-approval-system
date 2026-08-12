@@ -81,6 +81,40 @@ def check_consistency_flags(data):
     return flags
 
 
+def generate_improvement_path(data, prediction):
+    """Actionable suggestions to improve approval chances."""
+    if prediction != "Rejected":
+        return []
+
+    suggestions = []
+    cibil = data["cibil_score"]
+    income = data["income_annum"]
+    loan = data["loan_amount"]
+    total_assets = (
+        data["residential_assets_value"] + data["commercial_assets_value"]
+        + data["luxury_assets_value"] + data["bank_asset_value"]
+    )
+
+    if cibil < 700:
+        target_cibil = min(cibil + 150, 750)
+        suggestions.append(f"Palakasin ang CIBIL score papuntang {target_cibil}+ sa pamamagitan ng regular at on-time na pagbabayad ng utang sa loob ng 6-12 buwan.")
+
+    if income > 0 and loan > income * 6:
+        lower_loan = round(income * 5, -4)
+        suggestions.append(f"Bawasan ang hiniram na halaga papuntang mas malapit sa ₱{lower_loan:,.0f} (mas makatwiran kumpara sa kasalukuyang income).")
+
+    if income > 0 and total_assets < income * 1:
+        suggestions.append("Magdagdag ng collateral/assets (halimbawa bank savings o property) bilang karagdagang backup sa aplikasyon.")
+
+    if data["loan_term"] <= 4:
+        suggestions.append("Pahabain ang loan term (halimbawa 8-10 taon sa halip na mas maikli) para mas mababa ang buwanang bayad at risk.")
+
+    if not suggestions:
+        suggestions.append("Panatilihin ang stable na income at magpatuloy sa magandang financial history bago muling mag-apply.")
+
+    return suggestions
+
+
 def generate_rejection_reasons(data, prediction, probability):
     if prediction != "Rejected":
         return []
@@ -222,6 +256,7 @@ def predict():
 
     flags = check_consistency_flags(input_dict)
     rejection_reasons = generate_rejection_reasons(input_dict, prediction_label, approval_probability)
+    improvement_suggestions = generate_improvement_path(input_dict, prediction_label)
 
     save_application({
         "applicant_name": applicant_name,
@@ -257,6 +292,7 @@ def predict():
         top_factors=top_factors,
         flags=flags,
         rejection_reasons=rejection_reasons,
+        improvement_suggestions=improvement_suggestions,
         base_input=json.dumps(input_dict),
         max_income=income_annum,
         model_votes=model_votes,
