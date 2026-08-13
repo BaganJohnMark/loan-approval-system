@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, make_response
 from functools import wraps
 import joblib
 import numpy as np
 import json
 import os
 import uuid
+import csv
+import io
 from database import init_db, migrate_db, save_application, get_all_applications, set_verified
 
 app = Flask(__name__)
@@ -82,10 +84,8 @@ def check_consistency_flags(data):
 
 
 def generate_improvement_path(data, prediction):
-    """Actionable suggestions to improve approval chances."""
     if prediction != "Rejected":
         return []
-
     suggestions = []
     cibil = data["cibil_score"]
     income = data["income_annum"]
@@ -94,24 +94,18 @@ def generate_improvement_path(data, prediction):
         data["residential_assets_value"] + data["commercial_assets_value"]
         + data["luxury_assets_value"] + data["bank_asset_value"]
     )
-
     if cibil < 700:
         target_cibil = min(cibil + 150, 750)
         suggestions.append(f"Palakasin ang CIBIL score papuntang {target_cibil}+ sa pamamagitan ng regular at on-time na pagbabayad ng utang sa loob ng 6-12 buwan.")
-
     if income > 0 and loan > income * 6:
         lower_loan = round(income * 5, -4)
         suggestions.append(f"Bawasan ang hiniram na halaga papuntang mas malapit sa ₱{lower_loan:,.0f} (mas makatwiran kumpara sa kasalukuyang income).")
-
     if income > 0 and total_assets < income * 1:
         suggestions.append("Magdagdag ng collateral/assets (halimbawa bank savings o property) bilang karagdagang backup sa aplikasyon.")
-
     if data["loan_term"] <= 4:
         suggestions.append("Pahabain ang loan term (halimbawa 8-10 taon sa halip na mas maikli) para mas mababa ang buwanang bayad at risk.")
-
     if not suggestions:
         suggestions.append("Panatilihin ang stable na income at magpatuloy sa magandang financial history bago muling mag-apply.")
-
     return suggestions
 
 
@@ -143,27 +137,21 @@ def generate_rejection_reasons(data, prediction, probability):
 
 
 def run_prediction(input_dict):
-    """Core prediction logic — shared by /predict and /simulate."""
     input_row = [input_dict[col] for col in feature_columns]
     input_scaled = scaler.transform([input_row])
-
     pred_encoded = model.predict(input_scaled)[0]
     pred_proba = model.predict_proba(input_scaled)[0]
-
     prediction_label = le_status.inverse_transform([pred_encoded])[0]
     approved_index = list(le_status.classes_).index("Approved")
     approval_probability = float(pred_proba[approved_index])
     risk_tier = get_risk_tier(approval_probability)
-
     return prediction_label, approval_probability, risk_tier
 
 
 def get_model_consensus(input_dict):
-    """Run all 4 models on the same applicant and compare their votes."""
     input_row = [input_dict[col] for col in feature_columns]
     input_scaled = scaler.transform([input_row])
     approved_index = list(le_status.classes_).index("Approved")
-
     votes = []
     for name, m in all_models.items():
         pred_encoded = m.predict(input_scaled)[0]
@@ -171,7 +159,6 @@ def get_model_consensus(input_dict):
         label = le_status.inverse_transform([pred_encoded])[0]
         prob = round(float(pred_proba[approved_index]) * 100, 1)
         votes.append({"model": name, "prediction": label, "probability": prob})
-
     approved_count = sum(1 for v in votes if v["prediction"] == "Approved")
     if approved_count == 4 or approved_count == 0:
         agreement = "High Confidence — Lahat ng models ay sumasang-ayon"
@@ -179,7 +166,6 @@ def get_model_consensus(input_dict):
         agreement = "Moderate Confidence — Karamihan sumasang-ayon"
     else:
         agreement = "Model Disagreement — Recommend Manual Review"
-
     return votes, agreement
 
 
@@ -197,17 +183,33 @@ def home():
 @app.route("/predict", methods=["POST"])
 def predict():
     applicant_name = request.form.get("applicant_name")
-    no_of_dependents = int(request.form.get("no_of_dependents"))
+
+    try:
+        no_of_dependents = int(request.form.get("no_of_dependents"))
+        income_annum = int(request.form.get("income_annum"))
+        loan_amount = int(request.form.get("loan_amount"))
+        cibil_score = int(request.form.get("cibil_score"))
+        loan_term = int(request.form.get("loan_term"))
+        residential_assets_value = int(request.form.get("residential_assets_value"))
+        commercial_assets_value = int(request.form.get("commercial_assets_value"))
+        luxury_assets_value = int(request.form.get("luxury_assets_value"))
+        bank_asset_value = int(request.form.get("bank_asset_value"))
+    except (ValueError, TypeError):
+        return render_template("error.html", message="Hindi valid ang isa o higit pang numero na inyong inilagay. Pakisuri at subukan ulit."), 400
+
+    if (income_annum < 0 or loan_amount < 0 or no_of_dependents < 0
+            or loan_term < 1 or residential_assets_value < 0 or commercial_assets_value < 0
+            or luxury_assets_value < 0 or bank_asset_value < 0):
+        return render_template("error.html", message="Hindi maaaring negatibo ang mga numerical na value. Pakisuri at subukan ulit."), 400
+
+    if not (300 <= cibil_score <= 900):
+        return render_template("error.html", message="Ang CIBIL score ay dapat nasa pagitan ng 300 at 900."), 400
+
+    if income_annum > 10_000_000_000 or loan_amount > 10_000_000_000:
+        return render_template("error.html", message="Sobrang laki ng inilagay na numero. Pakisuri ang income o loan amount."), 400
+
     education = request.form.get("education")
     self_employed = request.form.get("self_employed")
-    income_annum = int(request.form.get("income_annum"))
-    loan_amount = int(request.form.get("loan_amount"))
-    loan_term = int(request.form.get("loan_term"))
-    cibil_score = int(request.form.get("cibil_score"))
-    residential_assets_value = int(request.form.get("residential_assets_value"))
-    commercial_assets_value = int(request.form.get("commercial_assets_value"))
-    luxury_assets_value = int(request.form.get("luxury_assets_value"))
-    bank_asset_value = int(request.form.get("bank_asset_value"))
 
     region = request.form.get("region", "")
     province = request.form.get("province", "")
@@ -302,7 +304,6 @@ def predict():
 
 @app.route("/simulate", methods=["POST"])
 def simulate():
-    """Re-run prediction with modified loan_amount / cibil_score for the What-If simulator."""
     data = request.get_json()
     try:
         input_dict = {
@@ -352,7 +353,6 @@ def logout():
 @login_required
 def records():
     applications = get_all_applications()
-
     total_applications = len(applications)
     approved_count = sum(1 for a in applications if a["prediction"] == "Approved")
     approval_rate = round((approved_count / total_applications) * 100, 1) if total_applications else 0
@@ -367,6 +367,34 @@ def records():
         avg_cibil=avg_cibil,
         flagged_count=flagged_count,
     )
+
+
+@app.route("/export/csv")
+@login_required
+def export_csv():
+    applications = get_all_applications()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "ID", "Name", "Region", "Province", "City", "ID Type", "ID Number", "Verified",
+        "Dependents", "Education", "Self Employed", "Income", "Loan Amount", "Loan Term",
+        "CIBIL", "Residential Assets", "Commercial Assets", "Luxury Assets", "Bank Assets",
+        "Prediction", "Probability", "Risk Tier", "Flags", "Date"
+    ])
+    for a in applications:
+        writer.writerow([
+            a["id"], a["applicant_name"], a["region"], a["province"], a["city"],
+            a["id_type"], a["id_number"], "Yes" if a["verified"] else "No",
+            a["no_of_dependents"], a["education"], a["self_employed"],
+            a["income_annum"], a["loan_amount"], a["loan_term"], a["cibil_score"],
+            a["residential_assets_value"], a["commercial_assets_value"],
+            a["luxury_assets_value"], a["bank_asset_value"],
+            a["prediction"], a["probability"], a["risk_tier"], a["flags"], a["created_at"]
+        ])
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = "attachment; filename=credora_applicants.csv"
+    response.headers["Content-Type"] = "text/csv"
+    return response
 
 
 @app.route("/verify/<int:app_id>", methods=["POST"])

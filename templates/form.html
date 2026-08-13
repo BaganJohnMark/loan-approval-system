@@ -52,21 +52,13 @@
   .field-label { font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; font-weight: 600;
     letter-spacing: 0.05em; text-transform: uppercase; color: #605e5b; }
 
-  /* ----- Fade-in animation ----- */
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(14px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .fade-in-section {
-    opacity: 0;
-    animation: fadeInUp 0.55s ease-out forwards;
-  }
-  .fade-in-card {
-    opacity: 0;
-    animation: fadeInUp 0.6s ease-out forwards;
-  }
+  .fade-in-section { opacity: 0; animation: fadeInUp 0.55s ease-out forwards; }
+  .fade-in-card { opacity: 0; animation: fadeInUp 0.6s ease-out forwards; }
 
-  /* ----- Toast notification (replaces browser confirm) ----- */
   .toast-overlay {
     position: fixed; inset: 0; background: rgba(15,42,40,0.55);
     display: flex; align-items: center; justify-content: center;
@@ -88,7 +80,6 @@
   .toast-btn-cancel { background:#e6e2dd; color:#1e1b18; }
   .toast-btn-confirm { background:#1A5319; color:#fff; }
 
-  /* ----- Field focus lift ----- */
   .field-input:focus { transform: translateY(-1px); }
 </style>
 </head>
@@ -96,10 +87,14 @@
 <div class="flex flex-col flex-1 min-w-0 bg-deep-forest justify-center items-center py-12 px-4">
 <div class="bg-surface-ivory rounded-lg shadow-sm border border-border-muted max-w-[720px] w-full p-8 md:p-12 relative flex flex-col mx-auto fade-in-card">
 
-<div class="flex items-center gap-2 mb-2">
-  <span class="material-symbols-outlined text-deep-forest text-2xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
-  <span class="field-label text-secondary">CREDORA</span>
+<div class="flex items-center justify-between mb-2">
+  <div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-deep-forest text-2xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+    <span class="field-label text-secondary">CREDORA</span>
+  </div>
+  <button type="button" id="darkToggle" class="material-symbols-outlined text-secondary hover:text-deep-forest cursor-pointer" title="Toggle dark mode">dark_mode</button>
 </div>
+
 <h1 class="font-headline text-[32px] font-semibold text-deep-forest mb-1">Loan Approval Prediction</h1>
 <p class="text-secondary text-body-md mb-8">Fill in the applicant's financial profile below</p>
 
@@ -251,7 +246,6 @@
 </div>
 </div>
 
-<!-- ----- Toast confirmation modal ----- -->
 <div class="toast-overlay" id="toastOverlay">
   <div class="toast-box">
     <div class="toast-title">⚠️ May Napansing Hindi Pangkaraniwang Datos</div>
@@ -277,7 +271,6 @@
     }
   }
 
-  // ----- Philippine Regions and Provinces -----
   const phRegions = {
     "NCR": ["Metro Manila"],
     "CAR": ["Abra", "Apayao", "Benguet", "Ifugao", "Kalinga", "Mountain Province"],
@@ -421,7 +414,6 @@
     }
   });
 
-  // ----- Auto-format money inputs with commas -----
   document.querySelectorAll(".money-input").forEach(function (input) {
     input.addEventListener("input", function () {
       let raw = input.value.replace(/,/g, "").replace(/[^0-9]/g, "");
@@ -452,7 +444,6 @@
     return warnings;
   }
 
-  // ----- Custom toast confirm (replaces browser confirm()) -----
   const toastOverlay = document.getElementById("toastOverlay");
   const toastList = document.getElementById("toastList");
   const toastCancel = document.getElementById("toastCancel");
@@ -502,5 +493,20 @@
     btn.textContent = "Analyzing Profile...";
   });
 </script>
+
+<script>
+  const darkToggle = document.getElementById("darkToggle");
+  function applyDarkPref() {
+    const isDark = localStorage.getItem("credora-dark") === "1";
+    darkToggle.textContent = isDark ? "light_mode" : "dark_mode";
+  }
+  darkToggle.addEventListener("click", function () {
+    const isDark = localStorage.getItem("credora-dark") === "1";
+    localStorage.setItem("credora-dark", isDark ? "0" : "1");
+    applyDarkPref();
+  });
+  applyDarkPref();
+</script>
+
 </body>
 </html>
